@@ -1,0 +1,193 @@
+\documentclass[a4paper]{article}
+
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{proof,tikz}
+\usepackage{amssymb,amsthm,stmaryrd}
+
+
+\usepackage[edges]{forest}
+\usetikzlibrary{automata, positioning, arrows}
+
+
+\newtheorem{Lemma}{Lema}
+\newtheorem{Theorem}{Teorema}
+\theoremstyle{definition}
+\newtheorem{Example}{Exemplo}
+\newtheorem{Definition}{Definição}
+
+
+\usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \lhead{Teoria da Computação}
+  \rhead{Aula 7}
+  \lfoot{Prof. Rodrigo Ribeiro}
+  \rfoot{\thepage}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \pagestyle{fancy}
+
+\tikzset{
+        ->,  % makes the edges directed
+        >=stealth', % makes the arrow heads bold
+        node distance=2cm,
+        every state/.style={thick, fill=gray!10},
+        initial text=$\,$
+        }
+  
+
+\begin{document}
+
+  \title{Aula 7 - Propriedades de fechamento \\para linguagens regulares}
+  \author{Rodrigo Ribeiro}
+
+  \maketitle
+
+
+  \pagestyle{fancy}
+
+
+  \section*{Objetivos}
+
+  \begin{itemize}
+     \item Apresentar o conceito matemático de operação fechada.
+     \item Demonstrar que a classe das linguagens regulares é
+           fechada sobre união, interseção, complementação,
+           concatenação e fecho de Kleene.
+     \item Apresentar aplicações de propriedades de fechamento.
+  \end{itemize}
+
+  \section{Propriedades de fechamento de LRs}
+
+  \begin{Definition}[Operação fechada]\label{fechada}
+    Dizemos que uma função $f : A \times A \times ... \times A \to A$ é fechada
+    sobre um conjunto $A$ se $f(a_1,a_2,...,a_n) \in A$, em que $a_i \in A$.
+  \end{Definition}
+
+  \begin{Example}
+    Alguns exemplos de operações fechadas: A adição e multiplicação são fechadas
+    sobre o conjunto dos números naturais. Pois, para qualquer $n,m
+    \in\mathbb{N}$ temos que $n + m \in \mathbb{N}$ e $nm \in \mathbb{N}$.
+    Porém, a operação de subtração não é fechada sobre $\mathbb{N}$. Pois,
+    sempre que $m > n$ temos que $n - m < 0$ e, portanto, não pertence a $\mathbb{N}$.
+  \end{Example}
+
+  \begin{Theorem}
+    A classe das linguagens regulares é fechada sobre união, interseção e
+    complementação.
+  \end{Theorem}
+  \begin{proof}
+    Consequência das construções de produto e complementação apresentadas na
+    Aula 4.
+  \end{proof}
+
+  \begin{Theorem}
+    A classe das linguagens regulares é fechada sobre a concatenação.
+  \end{Theorem}
+  \begin{proof}
+    Sejam $M_1=(E_1,\Sigma,\delta_1,i_1,F_1)$ e
+    $M_2=(E_2,\Sigma,\delta_2,i_2,F_2)$
+    dois AFDs que aceitam $L(M_1)$ e $L(M_2)$.
+    O AFN$\lambda$ $M_3 =(E_1 \cup E_2, \Sigma, \delta_3, \{i_1\}, F_2)$ aceita
+    $L(M_1)L(M_2)$, em que $\delta_3$ é definida como:
+    \[
+      \delta_3 = \delta_1 \cup \delta_2 \cup \{(e,\lambda, i_2)\,|\,e \in F_1\} 
+    \]
+  \end{proof}
+
+  \begin{Theorem}
+    A classe das linguagens regulares é fechada sobre o fecho de Kleene.
+  \end{Theorem}
+  \begin{proof}
+    Seja $M = (E,\Sigma,\delta, i, F)$ um AFD que aceita $L(M)$. O AFN$\lambda$
+    $M' = (E', \Sigma, \delta', I', F')$ aceita $L(M)^*$, em que:
+    \begin{itemize}
+      \item $E' = E \cup\{i'\},\, i' \not\in E$.
+      \item $I' = \{i'\}$
+      \item $F' = F \cup \{i'\}$
+      \item $\delta'$ é definida como:
+        \begin{itemize}
+        \item $\delta'(i',\lambda) = \{i\}$.
+        \item $\delta'(e,a) = \{\delta(e,a)\}$, para todo $e\in E$,
+          $a\in\Sigma$.
+        \item $\delta'(e,\lambda) = \{i'\}$, para todo $e \in F$.
+        \end{itemize}
+    \end{itemize}
+  \end{proof}
+
+  \subsection{Aplicando as propriedades de fechamento}
+
+  Propriedades de fechamento podem ser utilizadas para: 1) provar que uma
+  linguagem é regular; 2) provar que uma linguagem não é regular e 3)
+  permitir a construção incremental de AF para linguagens. Apresentaremos
+  exemplos de cada uma dessas aplicações.
+
+  \begin{Example}[Aplicação 1]\label{exemplo1}
+    Considere a seguinte linguagem
+    \[
+      L=\{w \in \{0,1\}^*\,|\,w \textit{ possui um
+        n}^o\textit{ par de 0's e um único 1}\}
+    \]
+    Podemos mostrar que essa linguagem é regular usando propriedades de
+    fechamento. Para isso, note que $L = L_1 \cap L_2$, em que:
+    \[
+      \begin{array}{l}
+        L_1 = \{w \in \{0,1\}^*\,|\,w\textit{ possui um n}^o\textit{ par de
+        0's}\}\\
+        L_2 = \{0\}^*\{1\}\{0\}^*
+      \end{array}
+    \]
+    Para mostrar que tanto $L_1$ quanto $L_2$ são regulares, basta construir
+    um AF que as aceite.
+  \end{Example}
+  
+  \begin{Example}[Aplicação 2]
+    Seja $L=\{0^n1^m2^p\,|\,n = m + p\}$. Provaremos que $L$ não é regular
+    usando propriedades de fechamento. A idéia para mostrar que $L$ não é
+    regular é aplicarmos propriedades de fechamento de forma a obter uma
+    linguagem que já sabemos a priori não ser regular. Ora, se $L$ fosse
+    regular, a aplicação de propriedades de fechamento deveria produzir
+    somente linguagens regulares. Com isso, obtemos a contradição necessária.
+    Segue a demonstração abaixo.
+
+    Suponha que $L$ seja uma linguagem regular. Sabe-se que $\{a\}^*\{b\}^*$ é
+    uma linguagem regular. Sendo assim, temos que $L\cap \{a\}^*\{b\}^*$ também
+    deve ser uma linguagem regular, já que as LRs são fechadas sobre a
+    interseção. Porém, $L\cap \{a\}^*\{b\}^* = \{a^nb^n\,|\,n \geq 0\}$ que
+    não é uma LR. Logo, $L$ não pode ser uma linguagem regular.
+  \end{Example}
+ 
+  \section{Exercícios}
+
+  \begin{enumerate}
+     \item Considerando as linguagens $L,\,L_1$ e $L_2$ apresentadas no
+       Exemplo \ref{exemplo1}. Faça o que se pede.
+       \begin{enumerate}
+         \item Apresente AFDs para $L_1$ e $L_2$.
+         \item Usando as propriedades de fechamento, construa um AF para $L$.
+         \end{enumerate}
+       \item Sejam $L_1$ e $L_2$ duas linguagens. Mostre que sim ou que não:
+         \begin{enumerate}
+          \item se $L_1$ e $L_2$ não são regulares, $L_1\cup L_2$ não
+                é regular.
+          \item se $L_1$ e $L_2$ não são regulares, $L_1\cap L_2$ não
+                é regular.
+          \item se $L_1$ não é regular, $\overline{L_1}$ não é regular.
+          \item se $L_1$ é regular e $L_2$ não é regular,
+                $L_1\cup L_2$ não é regular.
+          \item se $L_1$ é regular, $L_2$ não é regular e
+                $L_1\cap L_2$ é regular, $L_1\cup L_2$ não é regular.
+          \item se $L_1$ é regular, $L_2$ não é regular e
+                $L_1\cap L_2$ não é regular, $L_1\cup L_2$ não é regular.
+       \end{enumerate}
+     \item Prove que os seguintes conjuntos não são regulares usando
+       propriedades de fechamento.
+       \begin{enumerate}
+          \item $\{0,1\}^* - \{0^n1^n\,|\,n \geq 0\}$.
+          \item $\{0^n1^m \,|\, n < m\} \cup \{0^n1^m\,|\, m < n\}$
+       \end{enumerate}
+  \end{enumerate}
+\end{document}

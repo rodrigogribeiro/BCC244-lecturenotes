@@ -1,0 +1,346 @@
+\documentclass[a4paper]{article}
+
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{proof,tikz}
+\usepackage{amssymb,amsthm,stmaryrd}
+
+
+\usepackage[edges]{forest}
+\usetikzlibrary{automata, positioning, arrows}
+
+
+\newtheorem{Lemma}{Lema}
+\newtheorem{Theorem}{Teorema}
+\theoremstyle{definition}
+\newtheorem{Example}{Exemplo}
+\newtheorem{Definition}{Definição}
+
+
+\usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \lhead{Teoria da Computação}
+  \rhead{Aula 5}
+  \lfoot{Prof. Rodrigo Ribeiro}
+  \rfoot{\thepage}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \pagestyle{fancy}
+
+\tikzset{
+        ->,  % makes the edges directed
+        >=stealth', % makes the arrow heads bold
+        node distance=3cm,
+        every state/.style={thick, fill=gray!10},
+        initial text=$\,$
+        }
+  
+
+\begin{document}
+
+  \title{Aula 5 - Equivalência entre AFNs e AFDs e\\ introdução aos AFNs com
+    transições $\lambda$}
+  \author{Rodrigo Ribeiro}
+
+  \maketitle
+
+
+  \pagestyle{fancy}
+
+
+  \section*{Objetivos}
+
+  \begin{itemize}
+     \item Apresentar a construção de subconjunto (equivalência entre AFNs e AFDs). 
+     \item Apresentar o conceito de AFN com transições $\lambda$ e sua
+       equivalência com AFNs.
+  \end{itemize}
+
+  \section{Equivalência entre AFNs e AFDs}
+
+  \begin{Definition}[A construção de subconjunto]\label{subset}
+    Seja $M = (E,\Sigma,\delta,I,F)$ um AFN. O AFD
+    $M' = (E',\Sigma,\delta',i',F')$ é equivalente
+    a AFN, em que:
+    \begin{itemize}
+       \item $E' = \mathcal{P}(E)$
+       \item $\delta'(X,a) = \bigcup_{e\in X}\delta(e,a)$, $\delta'(\emptyset,a)
+         = \emptyset$, para $a\in \Sigma$.
+       \item $i' = I$.
+       \item $F' = \{X \subseteq E\,|\, X \cap F \neq \emptyset\}$.
+    \end{itemize}
+  \end{Definition}
+
+  \begin{Example}
+    Considere o seguinte AFN para a linguagem
+    $\{0,1\}^*\{00\}$.
+    \begin{figure}[H]
+      \begin{tikzpicture}[node distance=2cm]
+        \node[state,initial](s0){$A$} ;
+        \node[state, right of=s0](s1){$B$};
+        \node[state, accepting, right of=s1](s2){$C$};
+        \draw (s0) edge[loop above] node{$0,1$}(s0)
+              (s0) edge[above] node{$0$}(s1)
+              (s1) edge[above] node{$0$}(s2) ;
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    A partir da Definição \ref{subset}, podemos construir o AFD equivalente a
+    este AFN. Porém, como o conjunto de estados do AFD é $\mathcal{P}(E)$, este
+    pode possui um número exponencial de estados. Em algumas situações, muitos
+    destes estados são inúteis (um estado é inútil se ele não é alcançável a
+    partir do estado inicial). Dessa forma, uma maneira de evitar tais estados
+    inúteis é adicionar estados sob demanda, começando pelo estado que
+    representa o conjunto de estados iniciais. Vamos adotar o rótulo $1$ para
+    denotar o conjunto $\{A\}$.
+    \begin{figure}[H]
+      \begin{tikzpicture}[node distance=2cm]
+        \node[state,initial](s0){$1$} ;
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+     Note que no AFN, $\delta(A,0) =\{A,B\}$ e $\delta(A,1)
+     = \{A\}$. Logo, devemos incluir um estado relativo ao conjunto $\{A,B\}$,
+     que possuirá o rótulo $2$.
+    \begin{figure}[H]
+      \begin{tikzpicture}[node distance=2cm]
+        \node[state,initial](s1){$1$} ;
+        \node[state, right of=s1](s2){$2$} ;
+        \draw (s1) edge[loop above] node{$1$} (s1)
+              (s1) edge[above] node{$0$}(s2);
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    Com isso, encerramos as transições a partir do estado $1$, que representa o
+    conjunto $\{A\}$. Agora, para o estado $2$, denotando $\{A,B\}$, temos que:
+    $\delta(\{A,B\},0) = \{A,B,C\}$ e $\delta(\{A,B\},1) = \{A\}$. Logo, temos
+    que incluir um novo estado que corresponde ao conjunto $\{A,B,C\}$.
+    Chamaremos esse novo estado de $3$.
+    \begin{figure}[H]
+      \begin{tikzpicture}[node distance=2cm]
+        \node[state,initial](s1){$1$} ;
+        \node[state, right of=s1](s2){$2$} ;
+        \node[state, right of=s2](s3){$3$} ;
+        \draw (s1) edge[loop above] node{$1$} (s1)
+              (s1) edge[bend left, above] node{$0$}(s2)
+              (s2) edge[above] node{$0$}(s3)
+              (s2) edge[bend left, below] node{$1$}(s1) ;
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    Finalmente, obtemos o AFD equivalente ao incluir as transições para o estado
+    $3$, equivalente a $\{A,B,C\}$ que são: $\delta(\{A,B,C\},0)=\{A,B,C\}$ e
+    $\delta(\{A,B,C\},1) = \{A\}$.
+    \begin{figure}[H]
+      \begin{tikzpicture}[node distance=2cm]
+        \node[state,initial](s1){$1$} ;
+        \node[state, right of=s1](s2){$2$} ;
+        \node[state, right of=s2](s3){$3$} ;
+        \draw (s1) edge[loop above] node{$1$} (s1)
+              (s1) edge[bend left, above] node{$0$}(s2)
+              (s2) edge[above] node{$0$}(s3)
+              (s2) edge[bend left, above] node{$1$}(s1)
+              (s3) edge[loop above] node{$0$}(s3)
+              (s3) edge[bend left, below] node{$1$}(s1);
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    Como não há estados sem transições a serem incluídas, terminamos a
+    construção. Agora, falta apenas indicar os estados finais, conforme abaixo.
+    \begin{figure}[H]
+      \begin{tikzpicture}[node distance=2cm]
+        \node[state,initial](s1){$1$} ;
+        \node[state, right of=s1](s2){$2$} ;
+        \node[state, accepting, right of=s2](s3){$3$} ;
+        \draw (s1) edge[loop above] node{$1$} (s1)
+              (s1) edge[bend left, above] node{$0$}(s2)
+              (s2) edge[above] node{$0$}(s3)
+              (s2) edge[bend left, above] node{$1$}(s1)
+              (s3) edge[loop above] node{$0$}(s3)
+              (s3) edge[bend left, below] node{$1$}(s1);
+      \end{tikzpicture}
+      \centering
+    \end{figure}    
+  \end{Example}
+
+  \subsection{Correção da construção de subconjunto}
+
+  \begin{Lemma}\label{lemma1}
+    Seja $M$ um AFN e $M'$ o seu AFD obtido pela construção de subconjunto.
+    Então, para todo $X \subseteq E$ e $w \in \Sigma^*$,
+    $\widehat{\delta}(X,w) = \widehat{\delta}'(X,w)$.
+  \end{Lemma}
+  \begin{proof}
+    Por indução sobre $w$.
+    \begin{itemize}
+       \item Caso base ($w = \lambda$). Temos:
+         \[\widehat{\delta}(X,\lambda) = X = \widehat{\delta}'(X,w)\]
+       \item Passo indutivo ($w = ay$). Suponha que
+         $\widehat{\delta}(X,y) = \widehat{\delta}'(X,y)$. Considere os
+         seguintes casos:
+         \begin{itemize}
+            \item $X = \emptyset$. Temos:
+              \[
+                \begin{array}{lcl}
+                  \widehat{\delta}'(\emptyset,ay) & = & \{\textit{def. de }\widehat{\delta}\}\\
+                  \widehat{\delta}'(\delta'(\emptyset,a),y) & = & \{\textit{def.
+                                                                  de
+                                                                  }\delta'\}\\
+                  \widehat{\delta}'(\emptyset,y) & = & \{H.I.\}\\
+                  \widehat{\delta}(\emptyset,y) & = &\{\textit{def. de
+                                                        }\widehat{\delta}\}\\
+                  \emptyset & = & \\
+                  \widehat{\delta}(\emptyset,ay)
+                \end{array}
+              \]
+            \item $X = ay$. Temos:
+              \[
+                \begin{array}{lcl}
+                  \widehat{\delta}'(X,ay) & = & \{\textit{def. de }\widehat{\delta}\}\\
+                  \widehat{\delta}'(\delta'(X,a),y) & = & \{\textit{def. de }\delta'\}\\
+                  \widehat{\delta}'(\bigcup_{e\in X}\delta(e,a),y) & = & \{H.I.\}\\
+                 \widehat{\delta}(\bigcup_{e\in X}\delta(e,a),y) & = & \{\textit{def. de }\widehat{\delta}\}\\
+                 \widehat{\delta}(X,ay)
+                \end{array}
+              \]
+          \end{itemize}
+    \end{itemize}
+  \end{proof}
+  \begin{Theorem}[Correção da construção de subconjunto.]
+    Suponha $M=(E,\Sigma,\delta,I,F)$ um AFN arbitrário. Existe um AFD $M'$ tal
+    que $L(M) = L(M')$. 
+  \end{Theorem}
+  \begin{proof}
+    Seja $M'$ o AFD obtido a partir de $M$ usando a Definição \ref{subset}.
+    Suponha $w\in\Sigma^*$ arbitrário. Temos:
+    \[
+      \begin{array}{lcl}
+        w \in L(M') & \leftrightarrow & \{\textit{def. de }L(M)\}\\
+        \delta'(I,w) \in F' & \leftrightarrow & \{\textit{def. de }F'\}\\
+        \delta'(I,w) \cap F \neq \emptyset & \leftrightarrow & \{\textit{Lema }\ref{lemma1}\}\\
+        \delta(I,w) \cap F \neq \emptyset & \leftrightarrow & \{\textit{def. de
+                                                              }L(M)\}\\
+        w \in L(M)
+      \end{array}
+    \]
+    Como $w\in\Sigma^*$ é arbitrário, temos que $L(M') = L(M)$.
+  \end{proof}
+
+  \section{AFNs com transições $\lambda$}
+
+  \begin{Definition}[AFN com transições $\lambda$ (AFN$\lambda$)]
+    Um AFN$\lambda$ $M = (E,\Sigma, \delta,I,F)$ é uma quíntupla, em que:
+    \begin{itemize}
+      \item $E,\Sigma, I$ e $F$ são como em AFNs.
+      \item $\delta : E \times (\Sigma \cup \{\lambda\}) \to \mathcal{P}(E)$,
+        uma função total.
+    \end{itemize}
+  \end{Definition}
+
+  \begin{Example}\label{afnlambdaex}
+    Considere a tarefa de construir um AFN para a linguagem: $\{00\}^*
+    \cup\{1\}\{11\}^*$. Um AFN$\lambda$ pode representar essa linguagem de
+    maneira simples, como abaixo:
+    \begin{figure}[H]
+      \begin{tikzpicture}[node distance=2cm]
+        \node[state,initial](s0){$A$} ;
+        \node[state,accepting, above right of=s0](s1){$B$} ;
+        \node[state, accepting, below right of=s0](s2){$C$} ;
+        \node[state, right of=s1](s3){$D$} ;
+        \node[state, right of=s2](s4){$E$} ;
+        \draw (s0) edge[above left] node{$\lambda$}(s1)
+              (s0) edge[above right] node{$1$}(s2)
+              (s1) edge[below, bend right] node{$0$} (s3)
+              (s3) edge[above, bend right] node{$0$} (s1)
+              (s2) edge[below, bend right] node{$1$} (s4)
+              (s4) edge[above, bend right] node{$1$} (s2);              
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+  \end{Example}
+
+  \begin{Definition}[Função fecho de $\lambda$ ($f\lambda$)]
+    Seja $M=(E,\Sigma,\delta,I,F)$ um AFN$\lambda$. A função fecho de $\lambda$,
+    $f\lambda : \mathcal{P}(E)\to\mathcal{P}(E)$, é definida recursivamente
+    como:
+    \begin{itemize}
+       \item $X \subseteq f\lambda(X)$, para todo $X \subseteq E$.
+       \item Se $e\in f\lambda(X)$ então $\delta(e,\lambda)\subseteq f\lambda(X)$.
+    \end{itemize}
+  \end{Definition}
+
+  \begin{Example}
+    Considere o AFN$\lambda$ do Exemplo \ref{afnlambdaex}. Abaixo apresentamos o
+    resultado de $f\lambda$ para cada um dos estados deste AFN.
+    \[
+      \begin{array}{ll}
+        f\lambda(\{A\}) = \{A,B\} & f\lambda(\{B\}) = \{B\}\\
+        f\lambda(\{C\}) = \{C\}   & f\lambda(\{D\}) = \{D\} \\
+        f\lambda(\{E\}) = \{E\}
+      \end{array}
+    \]
+  \end{Example}
+
+  \begin{Definition}[Função de transição estendida para AFN$\lambda$]
+    Seja $M=(E,\Sigma,\delta,I,F)$ um AFN$\lambda$. A função de transição
+    estendida para $M$, $\widehat{\delta} : \mathcal{P}(E) \times
+    \Sigma^*\to\mathcal{P}(E)$, é definida recursivamente como:
+    \begin{itemize}
+       \item $\widehat{\delta}(\emptyset,a) = \emptyset$
+       \item $\widehat{\delta}(A,\lambda) = f\lambda(A)$
+       \item $\widehat{\delta}(A,ay) = \widehat{\delta}(\bigcup_{e\in
+           f\lambda(A)}\delta(e,a),y)$, para $a\in \Sigma$ e $y \in \Sigma^*$.
+    \end{itemize}
+    A linguagem aceita por um AFN$\lambda$ é definida como
+    \[
+      L(M) = \{w\in\Sigma^*\,|\,\widehat{\delta}(I,w) \cap F \neq \emptyset\}
+    \]
+  \end{Definition}
+
+  \begin{Definition}[Construção de um AFN a partir de um AFN$\lambda$]\label{afnlambdaafn}
+    Seja $M=(E,\Sigma,\delta,I,F)$ um AFN$\lambda$. O AFN equivalente a $M$ é
+    $M'=(E,\Sigma,\delta',I ',F)$ em que:
+    \begin{itemize}
+      \item $I' = f\lambda(I)$
+      \item $\delta'(e,a) = f\lambda(\delta(e,a))$, para $e \in E$ e $a \in \Sigma$.
+    \end{itemize}
+  \end{Definition}
+
+  \begin{Example}
+    Considere o Exemplo \ref{afnlambdaex}. A seguir apresentamos o AFN
+    equivalente produzido pela construção da Definição \ref{afnlambdaafn}.
+     \begin{figure}[H]
+      \begin{tikzpicture}[node distance=2cm]
+        \node[state,initial](s0){$A$} ;
+        \node[state, initial, accepting, above right of=s0](s1){$B$} ;
+        \node[state, accepting, below right of=s0](s2){$C$} ;
+        \node[state, right of=s1](s3){$D$} ;
+        \node[state, right of=s2](s4){$E$} ;
+        \draw 
+              (s0) edge[above right] node{$1$}(s2)
+              (s1) edge[below, bend right] node{$0$} (s3)
+              (s3) edge[above, bend right] node{$0$} (s1)
+              (s2) edge[below, bend right] node{$1$} (s4)
+              (s4) edge[above, bend right] node{$1$} (s2);              
+      \end{tikzpicture}
+      \centering
+    \end{figure}   
+  \end{Example}
+  
+  \section{Exercícios}
+
+  \begin{enumerate}
+    \item Construa AFNs para as seguintes linguagens. Em seguida, aplique a
+      construção de conjunto para obter o AFD equivalente.
+      Considere o alfabeto $\Sigma=\{a,b,c\}$.
+      \begin{enumerate}
+        \item Palavras em que o último símbolo seja igual ao primeiro.
+        \item Palavras em que o útlimo símbolo seja diferente do primeiro.
+        \item Palavras terminadas em abab.
+        \item Palavras em que o último símbolo não tenha ocorrido antes.
+        \end{enumerate}
+  \end{enumerate}
+\end{document}

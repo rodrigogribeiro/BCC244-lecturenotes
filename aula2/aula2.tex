@@ -1,0 +1,355 @@
+\documentclass[a4paper]{article}
+
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{proof,tikz}
+\usepackage{amssymb,amsthm,stmaryrd}
+
+
+\usepackage[edges]{forest}
+\usetikzlibrary{automata, positioning, arrows}
+
+
+\newtheorem{Lemma}{Lema}
+\newtheorem{Theorem}{Teorema}
+\theoremstyle{definition}
+\newtheorem{Example}{Exemplo}
+\newtheorem{Definition}{Definição}
+
+
+\usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \lhead{Teoria da Computação}
+  \rhead{Aula 2}
+  \lfoot{Prof. Rodrigo Ribeiro}
+  \rfoot{\thepage}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \pagestyle{fancy}
+
+\tikzset{
+        ->,  % makes the edges directed
+        >=stealth', % makes the arrow heads bold
+        node distance=3cm,
+        every state/.style={thick, fill=gray!10},
+        initial text=$\,$
+        }
+  
+
+\begin{document}
+
+  \title{Aula 2 - Autômatos finitos determinísticos}
+  \author{Rodrigo Ribeiro}
+
+  \maketitle
+
+
+  \pagestyle{fancy}
+
+
+  \section*{Objetivos}
+
+  \begin{itemize}
+     \item Apresentar o conceito de autômato finito determínistico
+           e exemplos dessa definição.
+     \item Apresentar a definição de linguagem aceita por um autômato
+           e equivalência entre autômatos finitos determínisticos.
+  \end{itemize}
+
+  \section{Um exemplo introdutório}
+
+  \begin{Example}[Modelando manipulação de arquivos]
+    Considere a tarefa de modelar o comportamento de uma biblioteca de leitura
+    de arquivos em sua linguagem de programação predileta. Idealmente, essa
+    deve conter funções para abrir um arquivo, ler conteúdo de um arquivo e
+    fechar um arquivo.
+
+    Uma maneira de modelarmos tal biblioteca seria usando um grafo, em que
+    os vértices representam as possíveis configurações de um arquivo. Em
+    um dado instante de tempo, um arquivo pode estar em uma de duas possíveis
+    configurações: aberto ou fechado. A transição entre as possíveis
+    configurações é feita por funções da biblioteca, a saber:
+    \begin{itemize}
+       \item \verb|open(f)|: Abre o arquivo \verb|f|.
+       \item \verb|read(f,v)|: Lê uma parte do conteúdo do arquivo \verb|f|
+         e o armazena em \verb|v|.
+       \item \verb|close(f)|: fecha o arquivo \verb|f|.
+    \end{itemize}
+    Evidentemente, algumas configurações não são válidas. Por exemplo,
+    chamar a operação \verb|read(f,v)| sobre um arquivo não aberto resulta
+    em um erro em tempo de execução. Além disso, não fechar um arquivo após
+    a execução pode ocasionar problemas de desempenho. Logo, além de nós para
+    representar as configurações relativas ao arquivo estar aberto ou fechado
+    devemos ter um nó para representar todas as configurações inválidas.
+    Dessa forma, nosso modelo cobrirá todas as possibilidades de uso dessa
+    biblioteca. Representaremos o estado fechado pela letra $C$, aberto por $O$
+    e o estado de configuração inválida por $E$.
+
+    Mas o que causará a mudança dessas configurações? Observe que a função
+    \verb|open(f)| faz com que um arquivo fechado passe para o estado aberto,
+    a função \verb|read(f,v)| não altera a configuração de um arquivo e
+    a função \verb|close(f)| possui significado óbvio. Visando simplificar
+    a escrita de nosso modelo, utilizaremos a letra $o$ para representar
+    a função \verb|open(f)|, $r$ para \verb|read(f,v)| e $c$ para
+    \verb|close(f)|. Abaixo apresentamos o diagrama que modela o
+    comportamento descrito.
+    \begin{figure}[ht]
+      \begin{tikzpicture}[node distance=2.5cm]
+        \node[state,initial,accepting](cl){$C$} ;
+        \node[state, right of=cl] (op){$O$} ;
+        \node[state, left of=cl] (err){$E$} ;
+        
+        \draw (cl) edge[bend left, above] node{$o$} (op)
+              (op) edge[loop above] node{$r$} (op)
+              (op) edge[bend left, below] node{$c$} (cl)
+              (cl) edge[bend left, below] node{$r,c$} (err)
+              (err)edge[loop above] node{$o,r,c$} (err) ;
+      \end{tikzpicture}
+      \centering      
+    \end{figure}
+    Note que o diagrama acima modela o comportamento esperado da biblioteca.
+    Antes de lermos informações presentes em um arquivo, este deve estar
+    aberto e todo uso da biblioteca deve ser finalizado com o fechamento
+    de arquivo. Dessa forma, o comportamento correto da biblioteca pode
+    ser especificado pelo seguinte conjunto de palavras sobre o alfabeto
+    $\Sigma=\{o,c,r\}$: $\{o\}\{r\}^*\{c\}$.
+
+    Existem tipos distintos de vértices nesse grafo. O primeiro é dito ser
+    inicial e possui uma seta à sua esquerda. Intuitivamente, o processamento
+    de uma palavra deve iniciar a partir desse vértice. Outro tipo de vértice é
+    o final, representado com uma borda adicional (no exemplo, o mesmo vértice
+    $C$ é inicial e final). Dizemos que uma palavra representa uma computação
+    válida nesse modelo de biblioteca se iniciando o processamento no vértice
+    inicial, consumindo um símbolo ao passar por cada aresta, a computação da
+    palavra termina em um estado final. Formalizaremos essa idéia a seguir.
+
+    O par $[e,w]$, em que $e$ é um dos vértices do grafo anterior e
+    $w\in\{o,c,r\}^*$ é chamado de \emph{configuração instantânea} pois,
+    representa um momento do processamento de uma palavra (ou estado da
+    biblioteca de manipulação de arquivos). A palavra $orrc$
+    repreesenta uma computação válida, visto que seu processamento termina
+    em um nó final.
+    \[
+      [C,orrc] \vdash [O,rrc] \vdash [O,rc] \vdash [O,c] \vdash [C,\lambda] 
+    \]
+    Por sua vez, a palavra $orcrr$ termina em um estado não final ($E$),
+    conforme a sequência de configurações abaixo.
+    \[
+      [C,orcrr] \vdash [O,rcrr] \vdash [O,crr] \vdash [C,rr] \vdash [E, r]
+      \vdash [E,\lambda] 
+    \]
+    A próxima seção apresentará definições precisas deste tipo de modelo e
+    de sua respectiva computação.
+  \end{Example}
+  
+  \section{Autômatos finitos determinísticos}
+
+  \begin{Definition}[Autômato finito determinístico]
+    Um autômato finito determinístico (AFD) $M$ é uma quíntupla $M =
+    (E,\Sigma,\delta,i,F)$, em que:
+    \begin{itemize}
+      \item $E$: conjunto finito de estados.
+      \item $\Sigma$: alfabeto
+      \item $\delta : E \times \Sigma \to E$: função de transição, uma
+        função total.
+      \item $i \in E$: estado inicial
+      \item $F\subseteq E$: conjunto de estados finais.
+    \end{itemize}
+  \end{Definition}
+
+  \begin{Example}
+    Considere o AFD apresentado anteriormente que modela o comportamento
+    de uma biblioteca de manipulação de arquivos. Sua representação de
+    acordo com a definição formal de um AFD é: $M=(S,\{o,c,r\},\delta,C,\{C\})$,
+    em que: $S = \{E,C,O\}$ e $\delta$ é tal que:
+    \[
+      \begin{array}{ll}
+        \delta(E,r) = E & \delta(E,c) = E \\
+        \delta(E,o) = E & \delta(C,r) = E \\
+        \delta(C,c) = E & \delta(C,o) = O \\
+        \delta(O,r) = O & \delta(O,c) = C \\
+      \end{array}
+    \]
+    Observe que cada aresta rotulada representa uma entrada na
+    função de transição. 
+  \end{Example}
+
+  \begin{Example}\label{afdimpar}
+    Considere a seguinte linguagem $L\subseteq \{0,1\}^*$:
+    \[
+      L = \{w \in\{0,1\}^*\,|\, \exists k. |w| = 2k + 1\}
+    \]
+    isto é, palavras de tamanho ímpar. O seguinte diagrama de estados
+    (grafo dirigido para representar um AFD) aceita palavras pertencentes
+    a essa linguagem.
+    \begin{figure}[ht]
+      \begin{tikzpicture}
+        \node[state,initial](p){$P$} ;
+        \node[state, accepting, right of=p] (i){$I$} ;
+        
+        \draw (p) edge[bend left, above] node{$0,1$} (i)
+              (i) edge[bend left, below] node{$0,1$} (p) ;
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+  \end{Example}
+
+  \begin{Example}\label{afd00}
+    Considere a seguinte linguagem sobre $\Sigma = \{0,1\}$:
+    \[
+       L = \{0,1\}^*\{00\}\{0,1\}^*
+     \]
+     O seguinte AFD aceita as palavras pertencentes a esta
+     linguagem.
+
+     \begin{figure}[ht]
+       \begin{tikzpicture}
+         \node[state, initial]               (s0){$A$} ;
+         \node[state,            right of=s0](s1){$B$} ;
+         \node[state, accepting, right of=s1](s2){$C$} ;
+
+         \draw (s0) edge[loop above]       node{$1$}   (s0)
+               (s0) edge[bend left, above] node{$0$}   (s1)
+               (s1) edge[above]            node{$0$}   (s2)
+               (s1) edge[bend left, below] node{$1$}   (s0)
+               (s2) edge[loop above]       node{$0,1$} (s2) ;
+       \end{tikzpicture}
+       \centering      
+     \end{figure}
+  \end{Example}  
+  
+  \subsection{Linguagem aceita por um AFD}
+
+  \begin{Definition}[Função de transição estendida]
+    Seja $M = (E,\Sigma, \delta, i, F)$ um AFD qualquer. A função de transição
+    estendida para $M$, $\widehat{\delta} : E \times \Sigma^* \to E$, é definida
+    da seguinte maneira:
+    \[
+      \begin{array}{lcl}
+        \widehat{\delta}(e,\lambda) & = & e \\
+        \widehat{\delta}(e,ay)      & = & \widehat{\delta}(\delta(e,a),y) \\
+      \end{array}
+    \]
+    em que $a \in \Sigma$ e $y \in \Sigma^*$. Informalmente, dado um estado $e
+    \in E$ e $w \in \Sigma^*$, $\widehat{\delta}(e,w)$ retorna o estado em que o
+    processamento da palavra $w$ termina ao ser iniciado no estado $e$.
+  \end{Definition}
+
+  \begin{Example}
+    Considere o AFD do Exemplo~\ref{afd00}. Temos que iniciando o processamento
+    da palavra $010011$ no estado inicial, este termina no estado final.
+    Conforme apresentado a seguir pelo cálculo de $\widehat{\delta}(A,010011)$.
+    \[
+      \begin{array}{lclcl}
+       \widehat{\delta}(010011) & = & \widehat{\delta}(\delta(A,0),10011) & = &\widehat{\delta}(B,10011)\\
+       \widehat{\delta}(\delta(B,1),0011) & = & \widehat{\delta}(A,0011) & =&\widehat{\delta}(\delta(A,0),011)\\
+        \widehat{\delta}(B,011) & = & \widehat{\delta}(\delta(B,0),11) & = &\widehat{\delta}(C,11)\\ 
+        \widehat{\delta}(\delta(C,1),1) & = & \widehat{\delta}(C,1) & =&\widehat{\delta}(\delta(C,1),\lambda)\\
+        \widehat{\delta}(C,\lambda) & = & C
+      \end{array}
+    \]
+    De maneira similar, podemos realizar o cálculo de $\widehat{\delta}(A,101)$.
+    \[
+      \begin{array}{lclcl}
+        \widehat{\delta}(A,101) & = & \widehat{\delta}(A,01) &=
+        &\widehat{\delta}(B,1) \\
+        \widehat{\delta}(A,\lambda) & = & A
+      \end{array}
+    \]
+    A partir desses exemplos, podemos perceber que se $i$ é o estado inicial de
+    um AFD $M$ e $w$ é uma palavra sobre o alfabeto $\Sigma$ de $M$, então $w$ é
+    aceita por $M$ se $\widehat{\delta}(i,w)$ é um estado final e recusada,
+    caso contrário. A definição seguinte formaliza essa noção.
+  \end{Example}
+
+  \begin{Definition}{Linguagem aceita por um AFD}
+    Seja $M = (E,\Sigma,\delta,i, F)$ um AFD qualquer. A linguagem aceita por
+    $M$, $L(M)$, é definida como:
+    \[
+      L(M) = \{w \in \Sigma^*\,|\,\widehat{\delta}(i,w) \in F\}
+    \]
+  \end{Definition}
+
+
+  \subsection{Relação entre configurações instantâneas de um AFD}
+
+  \begin{Definition}[Configuração instantânea]
+    Seja $M = (E,\Sigma, \delta,i, F)$ um AFD qualquer. Denomina-se por
+    configuração instantânea de $M$ o par $[e,w]$ em que $e \in E$ e
+    $w \in \Sigma^*$.
+  \end{Definition}
+
+  \begin{Definition}[Transição entre configurações instantâneas]
+    Seja $M = (E,\Sigma, \delta,i, F)$ um AFD qualquer, $[e,w]$ e $[e',w']$ duas
+    configurações instantâneas de $M$. A relação $\vdash \subseteq (E \times
+    \Sigma^*)^2$ representa a transição entre duas configurações instantâneas de
+    um AFD e é definida formalmente como: $[e,ay] \vdash [e', y]$ sempre que
+    $\delta(e,a) = e'$. A notação $[e,w] \vdash^* [e',w']$ denotará o fecho
+    transitivo e reflexivo de $\vdash$.
+  \end{Definition}
+
+
+  \subsection{Equivalência entre AFDs}
+
+
+  \begin{Example}
+    Considere o seguinte AFD que aceita a linguagem de palavras de tamanho ímpar:
+    \begin{figure}[H]
+      \begin{tikzpicture}[node distance=2cm]
+        \node[state, initial]                (pp){$A$} ;
+        \node[state, accepting, right of=pp] (pi){$B$} ;
+        \node[state,accepting,  below of=pp] (ip){$C$} ;
+        \node[state,  below of=pi] (ii){$D$} ;
+
+        \draw (pp) edge[bend left, above]     node{$1$} (pi)
+              (pi) edge[bend left, below]     node{$1$} (pp)
+              (pp) edge[bend left, left]      node{$0$} (ip)
+              (ip) edge[bend left, left]      node{$0$} (pp)
+              (pi) edge[bend left, left]     node{$0$} (ii)
+              (ii) edge[bend left, left]     node{$0$} (pi)
+              (ip) edge[bend left, above]    node{$1$} (ii)
+              (ii) edge[bend left, below]    node{$1$} (ip) ; 
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+
+    Apesar de possuir mais estados, o AFD apresentado aceita a mesma linguagem
+    do AFD apresentado no Exemplo~\ref{afdimpar}. A diferença entre os dois é
+    o número de estados que cada um possui (note que o número de transições
+    depende apenas do número de estados, visto que o alfabeto é o mesmo e a
+    função de transição é total). Logo, isso nos leva as seguintes perguntas:
+    Quando dois AFDs são equivalentes entre si?
+    Existe um AFD com o menor número de estados possível para uma certa
+    linguagem? A segunda pergunta será o assunto da próxima aula. A primeira, é
+    respondida pela definição seguinte.
+  \end{Example}
+
+  \begin{Definition}{Equivalência de AFDs}
+    Sejam $M_1$ e $M_2$ dois AFDs que reconhecem linguagens sobre um alfabeto
+    $\Sigma$. Dizemos que $M_1$ é equivalente a $M_2$, $M_1 \equiv M_2$, se
+    $L(M_1) = L(M_2)$.
+  \end{Definition}
+  
+  \section{Exercícios}
+
+  \begin{enumerate}
+    \item Construa AFDs para as seguintes linguagens sobre $\Sigma = \{0,1\}$
+      \begin{enumerate}
+        \item Palavras cujo tamanho é múltiplo de 4.
+        \item Palavras que terminam em 11.
+        \item Palavras que não possuem nenhuma ocorrência de 000.
+        \item Palavras que possuem um número par de 0's.
+        \item Palavras que possuem um número par de 0's e ímpar de 1's.
+      \end{enumerate}
+    \item Apresente a definição formal dos AFDs apresentados nos exemplos dessas
+      notas de aula.
+    \item Apresente a definição da linguagem aceita por um AFD usando a relação
+      de transição entre configurações intantâneas.
+    \item Seja $M = (E,\Sigma,\delta,i,F)$ um AFD qualquer. Prove que,
+      se $\widehat{\delta}(e,w) = e'$ então $[e,w]\vdash[e',\lambda]$, para todo
+         $e,e' \in E$ e $w \in \Sigma^*$.
+  \end{enumerate}
+\end{document}

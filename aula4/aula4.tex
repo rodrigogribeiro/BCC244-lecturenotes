@@ -1,0 +1,398 @@
+\documentclass[a4paper]{article}
+
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{proof,tikz}
+\usepackage{amssymb,amsthm,stmaryrd}
+
+
+\usepackage[edges]{forest}
+\usetikzlibrary{automata, positioning, arrows}
+
+
+\newtheorem{Lemma}{Lema}
+\newtheorem{Theorem}{Teorema}
+\theoremstyle{definition}
+\newtheorem{Example}{Exemplo}
+\newtheorem{Definition}{Definição}
+
+
+\usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \lhead{Teoria da Computação}
+  \rhead{Aula 4}
+  \lfoot{Prof. Rodrigo Ribeiro}
+  \rfoot{\thepage}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \pagestyle{fancy}
+
+\tikzset{
+        ->,  % makes the edges directed
+        >=stealth', % makes the arrow heads bold
+        node distance=3cm,
+        every state/.style={thick, fill=gray!10},
+        initial text=$\,$
+        }
+  
+
+\begin{document}
+
+  \title{Aula 4 - Produto, complementação de AFs e\\ introdução aos autômatos
+    finitos não determínisticos}
+  \author{Rodrigo Ribeiro}
+
+  \maketitle
+
+
+  \pagestyle{fancy}
+
+
+  \section*{Objetivos}
+
+  \begin{itemize}
+     \item Apresentar as construções de produto (união e interseção) e
+       complementação de AFDs. 
+     \item Apresentar a correção da construção de produto.
+     \item Apresentar o conceito de autômato finito não-determínistico (AFN).
+  \end{itemize}
+
+  \section{A construção do produto}
+
+  \begin{Definition}[Produto de AFDs]
+    Sejam $M_1 = (E_1,\Sigma,\delta_1,i_1,F_1)$ e $M_2 =
+    (E_2,\Sigma,\delta_2,i_2,F_2)$ dois AFDs quaisquer. O AFD
+    $M_3=(E_3,\Sigma,\delta_3,i_3,F_3)$ é o produto de $M_1$ e
+    $M_2$, em que:
+    \begin{itemize}
+       \item $E_3 = E_1 \times E_2$
+       \item $\delta_3((e_1,e_2),a) = (\delta_1(e_1,a),\delta_2(e_2,a))$.
+       \item Para $F_3$, temos duas possibilidades:
+         \begin{itemize}
+           \item Para interseção: $F_3 = F_1 \times F_2$.
+           \item Para união: $F_3 = (F_1 \times E_2) \cup (E_1 \times F_2)$.
+         \end{itemize}
+    \end{itemize}
+  \end{Definition}
+
+  \begin{Example}
+    Considere os seguintes AFDs, um que reconhece $L_1 = \{0\}\{0,1\}^*$ e o
+    segundo $L_2 = \{0,1\}^*\{1\}$:
+    \begin{figure}[H]
+      \begin{minipage}{0.45\textwidth}
+        \begin{tikzpicture}[node distance=2cm]
+          \node[state, initial](s0){$A$} ;
+          \node[state, accepting, right of=s0](s1){$B$} ;
+          \node[state, below of=s0] (err) {$e$} ;
+          \draw (s0) edge[above] node{$0$} (s1)
+                (s0) edge[left] node{$1$} (err)
+                (err) edge[loop right] node{$0,1$} (err)
+                (s1) edge[loop above] node{$0,1$} (err) ;
+        \end{tikzpicture}
+      \end{minipage}\hfill
+      \begin{minipage}{0.45\textwidth}
+        \begin{tikzpicture}[node distance=2cm]
+          \node[state,initial](s0){$C$} ;
+          \node[state,accepting, right of=s0](s1){$D$} ;
+          \draw (s0) edge[loop above] node{$0$} (s0)
+                (s0) edge[above, bend left] node{$1$} (s1)
+                (s1) edge[loop above] node{$1$} (s1)
+                (s1) edge[below, bend left] node{$0$} (s0) ;
+        \end{tikzpicture}
+      \end{minipage}
+      \centering
+    \end{figure}
+    Aplicando a construção de produto, podemos criar AFDs que $L_1 \cap L_2$
+    e $L_1\cup L_2$ que são apresentados a seguir. Vamos usar as seguintes
+    abreviações para os conjuntos de estados: $1$ para o conjunto $\{A,C\}$,
+    $2$ para $\{B,C\}$, $3$ para $\{e,D\}$, $4$ para $\{e,C\}$ e $5$ para
+    $\{B,D\}$. Primeiro, apresentamos o AFD para $L_1 \cap L_2$.
+    \begin{figure}[H]
+      \begin{tikzpicture}[node distance=2cm]
+        \node[state,initial](s0){$1$} ;
+        \node[state, above right of=s0](s1){$2$} ;
+        \node[state, below right of=s0](s2){$3$} ;
+        \node[state, right of=s2](s3){$4$} ;
+        \node[state, accepting, right of=s1](s4){$5$} ;
+        \draw (s0) edge[above left] node{$0$} (s1)
+              (s0) edge[below left] node{$1$} (s2)
+              (s1) edge[loop above] node{$0$} (s1)
+              (s1) edge[above, bend left] node{$1$} (s4)
+              (s2) edge[above, bend left] node{$0$} (s3)
+              (s2) edge[loop above] node{$1$} (s2)
+              (s3) edge[loop above] node{$0$} (s3)
+              (s3) edge[below, bend left] node{$1$} (s2)
+              (s4) edge[below, bend left] node{$0$} (s1)
+              (s4) edge[loop above] node{$1$} (s4) ;
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    A seguir apresentamos o AFD para $L_1 \cup L_2$.
+    \begin{figure}[H]
+      \begin{tikzpicture}[node distance=2cm]
+        \node[state,initial](s0){$1$} ;
+        \node[state, accepting, above right of=s0](s1){$2$} ;
+        \node[state, accepting, below right of=s0](s2){$3$} ;
+        \node[state, right of=s2](s3){$4$} ;
+        \node[state, accepting, right of=s1](s4){$5$} ;
+        \draw (s0) edge[above left] node{$0$} (s1)
+              (s0) edge[below left] node{$1$} (s2)
+              (s1) edge[loop above] node{$0$} (s1)
+              (s1) edge[above, bend left] node{$1$} (s4)
+              (s2) edge[above, bend left] node{$0$} (s3)
+              (s2) edge[loop above] node{$1$} (s2)
+              (s3) edge[loop above] node{$0$} (s3)
+              (s3) edge[below, bend left] node{$1$} (s2)
+              (s4) edge[below, bend left] node{$0$} (s1)
+              (s4) edge[loop above] node{$1$} (s4) ;
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+  \end{Example}
+
+  \subsection{Correção da construção de produto}
+
+  Apresentaremos a correção para a construção da interseção. O mesmo raciocínio
+  aplica-se para a união.
+
+  \begin{Lemma}\label{lemma1}
+    Para todo $e_1 \in E_1, e_2\in E_2$ e $w \in \Sigma^*$, temos que
+    $\widehat{\delta}_3((e_1,e_2), w) = (\widehat{\delta}_1(e_1,w),\widehat{\delta}_2(e_2,w))$.
+  \end{Lemma}
+  \begin{proof} Indução sobre $w$.
+    \begin{itemize}
+       \item Caso base ($w=\lambda$). Temos:
+         \[
+           \widehat{\delta}_3((e_1,e_2), \lambda) = (e_1,e_2) = (\widehat{\delta}_1(e_1,\lambda),\widehat{\delta}(e_2,\lambda))
+         \]
+       \item Passo indutivo. Suponha $a\in\Sigma$ arbitrario e que para todo $e_1,e_2$;
+         $\widehat{\delta}_3((e_1,e_2), w) =
+         (\widehat{\delta}_1(e_1,w),\widehat{\delta}_2(e_2,w))$.
+         Temos:
+         \[
+           \begin{array}{lcl}
+             \widehat{\delta}_3((e_1,e_2), aw) & = & \{\textit{def. de
+                                                     }\widehat{\delta}.\}\\
+             \widehat{\delta}_3(\delta_3((e_1,e_2),a),w) & = &
+                                                               \{\textit{def. de
+                                                               }\delta_3\}\\
+             \widehat{\delta}_3((\delta_1(e_1,a),\delta_2(e_2,a)),w) & = &
+                                                                           \{\textit{I.H.}\}\\
+             (\widehat{\delta}_1(\delta_1(e_1,a),w),\widehat{\delta}_2(\delta_2(e_2,a),w))
+                                               & = & \{\textit{def. de
+                                                     }\widehat{\delta}\} \\
+             (\widehat{\delta}_1(e_1,aw),\widehat{\delta}(e_2,aw))
+           \end{array}
+         \]
+    \end{itemize}
+  \end{proof}
+
+  \begin{Theorem}{Correção da construção de produto para interseção}
+    Sejam $M_1$ e $M_2$ dois AFDs quaisquer e $M_3$ o AFD construído para
+    a interseção usando $M_1$ e $M_2$. Temos que $L(M_3) = L(M_1) \cap L(M_2)$.
+  \end{Theorem}
+  \begin{proof}
+    Suponha $w \in \Sigma^*$. Temos:
+    \[
+      \begin{array}{lcl}
+        w \in L(M_3) & \leftrightarrow & \{\textit{def. de }L(M_3)\}\\
+        \widehat{\delta}_3(i_3,w) \in F_3 & \leftrightarrow & \{\textit{def. de }i_3,F_3\}\\
+        \widehat{\delta}_3((i_1,i_2),w) \in F_1 \times F_2 & \leftrightarrow &
+                                                                               \{\textit{Lema
+                                                                               }
+                                                                               \ref{lemma1}\}
+        \\
+        (\widehat{\delta}_1(e_1,w),\widehat{\delta}_2(e_2,w)) \in F_1\times F_2
+                     & \leftrightarrow & \{\textit{Prod. Cart.}\} \\
+        \widehat{\delta}_1(e_1,w) \in F_1 \land \widehat{\delta}_2(e_2,w)\in F_2
+                     & \leftrightarrow & \{\textit{def. de }L(M)\} \\
+        w \in L(M_1) \land w \in L(M_2) & \leftrightarrow & \{\textit{def.
+                                                            de }\cap\}\\
+        w \in L(M_1) \cap L(M_2)
+      \end{array}
+    \]
+    Como $w$ é arbitrário, temos que $L(M_3) = L(M_1)\cap L(M_2)$.
+  \end{proof}
+
+  \section{A construção da complementação}
+
+  \begin{Definition}
+    Seja $M=(E,\Sigma,\delta,i,F)$ um AFD que reconhece uma linguagem $L$.
+    O AFD $\overline{M} = (E,\Sigma,\delta,i,E - F)$ aceita $\overline{L}$.
+  \end{Definition}
+
+  \begin{Example}\label{afd00}
+    Considere a seguinte linguagem sobre $\Sigma = \{0,1\}$:
+    \[
+       L = \{0,1\}^*\{00\}\{0,1\}^*
+     \]
+     O seguinte AFD aceita as palavras pertencentes a esta
+     linguagem.
+
+     \begin{figure}[ht]
+       \begin{tikzpicture}
+         \node[state, initial]               (s0){$A$} ;
+         \node[state,            right of=s0](s1){$B$} ;
+         \node[state, accepting, right of=s1](s2){$C$} ;
+
+         \draw (s0) edge[loop above]       node{$1$}   (s0)
+               (s0) edge[bend left, above] node{$0$}   (s1)
+               (s1) edge[above]            node{$0$}   (s2)
+               (s1) edge[bend left, below] node{$1$}   (s0)
+               (s2) edge[loop above]       node{$0,1$} (s2) ;
+       \end{tikzpicture}
+       \centering      
+     \end{figure}
+     Podemos usar a construção de complementação para construir um
+     AFD para $\overline{L}$. Para isso, basta marcar como finais
+     todos os estados não finais e como não finais os antigos estados finais.
+     Abaixo apresentamos o resultado para o AFD acima apresentado.
+     \begin{figure}[ht]
+       \begin{tikzpicture}
+         \node[state, initial, accepting]               (s0){$A$} ;
+         \node[state, accepting, right of=s0](s1){$B$} ;
+         \node[state, right of=s1](s2){$C$} ;
+
+         \draw (s0) edge[loop above]       node{$1$}   (s0)
+               (s0) edge[bend left, above] node{$0$}   (s1)
+               (s1) edge[above]            node{$0$}   (s2)
+               (s1) edge[bend left, below] node{$1$}   (s0)
+               (s2) edge[loop above]       node{$0,1$} (s2) ;
+       \end{tikzpicture}
+       \centering      
+     \end{figure}   
+  \end{Example}  
+
+
+  \section{Introdução aos autômatos finitos não determínisticos}
+
+  \begin{Example}[Um exemplo informal]
+    Considere a tarefa de construir um AFD para a seguinte linguagem
+    $\{0,1\}^*\{00\}$.
+    \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state,initial](s0){$A$} ;
+        \node[state, right of=s0](s1){$B$};
+        \node[state, accepting, right of=s1](s2){$C$};
+        \draw (s0) edge[loop above] node{$1$}(s0)
+              (s0) edge[above, bend left] node{$0$}(s1)
+              (s1) edge[above, bend left] node{$0$}(s2)
+              (s1) edge[above, bend left] node{$1$}(s0)
+              (s2) edge[below, bend left] node{$1$}(s0)
+              (s2) edge[loop above] node{$0$}(s2);
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    Apesar de correto, o AFD acima é ``poluído'' por transições necessárias
+    para garantir que a palavra aceita realmente termina em 00. Uma alternativa,
+    mais compacta, e de mais fácil entendimento seria o seguinte autômato:
+    \begin{figure}[H]
+      \begin{tikzpicture}[node distance=2cm]
+        \node[state,initial](s0){$A$} ;
+        \node[state, right of=s0](s1){$B$};
+        \node[state, accepting, right of=s1](s2){$C$};
+        \draw (s0) edge[loop above] node{$0,1$}(s0)
+              (s0) edge[above] node{$0$}(s1)
+              (s1) edge[above] node{$0$}(s2) ;
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    Após uma rápida análise, podemos perceber que o autômato anterior realmente
+    aceita apenas palavras da linguagem $\{0,1\}^*\{00\}$. Porém, o autômato
+    anterior não é um AFD, pois a partir do estado $A$ processando $0$ na
+    palavra de entrada, temos transições tanto para o próprio estado $A$ quanto
+    para o estado $B$. O autômato acima apresentado é um exemplo de um autômato
+    finito não determínistico.
+  \end{Example}
+
+  \begin{Definition}[Autômato finito não determinístico - AFN]
+    Um AFN é uma quíntupla $M=(E,\Sigma,\delta,I,F)$, em que:
+    \begin{itemize}
+       \item $E$: conjunto finito de estados.
+       \item $\Sigma$: alfabeto.
+       \item $\delta : E \times \Sigma \to \mathcal{P}(E)$: função total de transição.
+       \item $I \subseteq E$ : conjunto de estados iniciais.
+       \item $F \subseteq E$ : conjunto de estados finais.
+    \end{itemize}
+    Observe que a função de transição produz, como resultado, um conjunto de
+    estados e, por isso, seu contra-domínio é $\mathcal{P}(E)$, o conjunto de
+    todos subconjuntos de estados.
+  \end{Definition}
+
+  \begin{Example}
+    Vamos considerar o AFN apresentado anteriormente sob um ponto de vista de
+    sua definição matemática. Primeiramente, temos que o seu conjunto de estados
+    e seu alfabeto são, respectivamente, $E=\{A,B,C\}$ e $\Sigma-\{0,1\}$. O
+    conjunto de estados iniciais é $I=\{A\}$ e o de estados finais $F=\{C\}$.
+    Finalmente, a função de transição para esse AFN é dada pela seguinte tabela.
+    \begin{figure}[H]
+      \begin{tabular}{|c|c|c|}
+        \hline
+        $\delta$ & $0$      & $1$ \\ \hline
+        $A$      &$\{A,B\}$ & $\{A\}$ \\
+        $B$      & $\{C\}$  & $\emptyset$ \\
+        $C$      & $\emptyset$ & $\emptyset$\\ \hline
+      \end{tabular}
+      \centering
+    \end{figure}
+  \end{Example}
+
+  \subsection{Linguagem aceita por um AFN}
+
+  Intuitivamente, dizemos que uma palavra $w\in\Sigma^*$ é aceita por um AFN $M$
+  se \textbf{existe} uma computação que termina em algum estado final de $M$
+  quando essa é iniciada em um estado inicial para a palavra $w$. O objetivo
+  dessa seção é apresentar formalmente essa noção.
+
+  \begin{Definition}[Função de transição estendida]
+    Seja $M=(E,\Sigma,\delta,I,F)$ um AFN qualquer. A função de transição
+    estendida $\widehat{\delta}^* : \mathcal{P}(E) \times \Sigma^*\to\mathcal{P}(E)$ é
+    definida como:
+    \begin{itemize}
+       \item $\widehat{\delta}^*(\emptyset,w) = \emptyset$, para todo
+         $w\in\Sigma^*$.
+       \item $\widehat{\delta}^*(A,\lambda) = A$, para todo $A\subseteq E$.
+       \item $\widehat{\delta}^*(A,ay) = \widehat{\delta}^*(\bigcup_{e \in
+           A}\delta(e,a), y)$, para todo $a\in \Sigma, y \in \Sigma^*$ e $A
+         \subseteq E$.
+    \end{itemize}
+  \end{Definition}
+
+  \begin{Definition}[Linguagem aceita por um AFN]
+    Seja $M=(E,\Sigma,\delta,I,F)$ um AFN qualquer. A linguagem aceita por $M$,
+    $L(M)$, é definida como:
+    \[
+      L(M) =\{w\in\Sigma^*\,|\,\widehat{\delta}^*(I,w)\cap F \neq \emptyset\}
+    \]
+    Isto é, o conjunto de palavras $w$ cujo processamento termina em um conjunto
+    de estados com pelo menos um estado final.
+  \end{Definition}
+  
+  \section{Exercícios}
+
+  \begin{enumerate}
+    \item Apresente AFDs para as seguintes linguagens sobre $\Sigma = \{0,1\}$.
+      Se possível, tente expressá-las como linguagens ``menores'' e use as
+      construções apresentadas para obter o AFD final.
+      \begin{enumerate}
+        \item Palavras cujo tamanho é menor que 3.
+        \item Palavras cujo tamanho é maior que 3.
+        \item Palavras com no máximo 3 ocorrências de 1's.
+        \item Palavras que contém um ou dois 1's e cujo tamanhé múltiplo de 3.
+      \end{enumerate}
+    \item Sejam $M_1$ e $M_2$ dois AFDs quaisquer. Mostre como construir um AFD
+      $M_3$ tal que $L(M_3) = L(M_1) - L(M_2)$.
+    \item Construa AFNs para as seguintes linguagens. Considere o alfabeto $\Sigma=\{a,b,c\}$.
+      \begin{enumerate}
+        \item Palavras em que o último símbolo seja igual ao primeiro.
+        \item Palavras em que o útlimo símbolo seja diferente do primeiro.
+        \item Palavras terminadas em abab.
+        \item Palavras em que o último símbolo não tenha ocorrido antes.
+        \end{enumerate}
+    \item Mostre como a partir de um AFN qualquer é possível construir um AFN
+      equivalente contendo apenas um estado inicial.
+  \end{enumerate}
+\end{document}

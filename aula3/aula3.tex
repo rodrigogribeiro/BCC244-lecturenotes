@@ -1,0 +1,474 @@
+\documentclass[a4paper]{article}
+
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{proof,tikz}
+\usepackage{amssymb,amsthm,stmaryrd}
+
+
+\usepackage[edges]{forest}
+\usetikzlibrary{automata, positioning, arrows}
+
+
+\newtheorem{Lemma}{Lema}
+\newtheorem{Theorem}{Teorema}
+\theoremstyle{definition}
+\newtheorem{Example}{Exemplo}
+\newtheorem{Definition}{Definição}
+
+
+\usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \lhead{Teoria da Computação}
+  \rhead{Aula 3}
+  \lfoot{Prof. Rodrigo Ribeiro}
+  \rfoot{\thepage}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \pagestyle{fancy}
+
+\tikzset{
+        ->,  % makes the edges directed
+        >=stealth', % makes the arrow heads bold
+        node distance=3cm,
+        every state/.style={thick, fill=gray!10},
+        initial text=$\,$
+        }
+  
+
+\begin{document}
+
+  \title{Aula 3 - Minimização de AFDs}
+  \author{Rodrigo Ribeiro}
+
+  \maketitle
+
+
+  \pagestyle{fancy}
+
+
+  \section*{Objetivos}
+
+  \begin{itemize}
+     \item Apresentar o conceito de equivalência entre estados de um AFD.
+     \item Apresentar a construção do AFD mínimo equivalente. 
+     \item Demonstrar que o AFD produzido pela minimização é equivalente ao
+           AFD original.
+  \end{itemize}
+
+  \section{Introdução}
+
+  \begin{Example}[Dois AFDs equivalentes]
+    Considere a seguinte linguagem $L\subseteq \{0,1\}^*$:
+    \[
+      L = \{w \in\{0,1\}^*\,|\, \exists k. |w| = 2k + 1\}
+    \]
+    isto é, palavras de tamanho ímpar. Abaixo, apresentamos
+    dois AFDs que aceitam essa linguagem.
+    \begin{figure}[ht]
+      \begin{minipage}{0.45\textwidth}
+        \begin{tikzpicture}
+          \node[state,initial](p){$P$} ;
+          \node[state, accepting, right of=p] (i){$I$} ;
+          
+          \draw (p) edge[bend left, above] node{$0,1$} (i)
+                (i) edge[bend left, below] node{$0,1$} (p) ;
+        \end{tikzpicture}
+      \end{minipage}\hfill
+      \begin{minipage}{0.45\textwidth}
+      \begin{tikzpicture}[node distance=2cm]
+        \node[state, initial]                (pp){$A$} ;
+        \node[state, accepting, right of=pp] (pi){$B$} ;
+        \node[state,accepting,  below of=pp] (ip){$C$} ;
+        \node[state,  below of=pi] (ii){$D$} ;
+
+        \draw (pp) edge[bend left, above]     node{$1$} (pi)
+              (pi) edge[bend left, below]     node{$1$} (pp)
+              (pp) edge[bend left, left]      node{$0$} (ip)
+              (ip) edge[bend left, left]      node{$0$} (pp)
+              (pi) edge[bend left, left]     node{$0$} (ii)
+              (ii) edge[bend left, left]     node{$0$} (pi)
+              (ip) edge[bend left, above]    node{$1$} (ii)
+              (ii) edge[bend left, below]    node{$1$} (ip) ; 
+      \end{tikzpicture}        
+      \end{minipage}
+    \end{figure}
+
+    O objetivo da aula de hoje é mostrar que dados dois ou mais
+    AFDs equivalentes é possível construir um AFD mínimo (isto é,
+    com o menor número possível de estados) equivalente. Além disso,
+    esse AFD mínimo é único, a menos de isomorfismo de grafos.
+  \end{Example}
+
+  \section{Construção do AFD mínimo}
+
+  \begin{Definition}[Equivalência de estados]
+    Seja $M = (E,\Sigma,\delta,i,F)$ um AFD. Dizemos que dois estados
+    $e_1,e_2 \in E$ são equivalentes, $e_1 \approx e_2$, se a seguinte
+    fórmula é verdadeira:
+    \[
+      \forall w. w\in\Sigma^* \to \widehat{\delta}(e_1,w) \in F \leftrightarrow
+      \widehat{\delta}(e_2,w) \in F
+    \]
+    A equivalência de estados é uma relação de equivalência: ela é reflexiva,
+    transitiva e simétrica. Logo, essa introduz uma partição sobre o conjunto de
+    estados. O AFD mínimo equivalente consiste em considerar como novo conjunto
+    estados o conjunto de classes de equivalência induzida pela relação $\approx$.
+  \end{Definition}
+
+  \begin{Definition}[Autômato finito mínimo equivalente].\label{afdmin}
+    Seja $M = (E,\Sigma,\delta,i,F)$ um AFD. O AFD mínimo equivalente a M é
+    $M' = (E',\Sigma,\delta',i', F')$, em que:
+    \begin{itemize}
+      \item $E' = \{[e]_\approx \,|\, e \in E\}$, isto é, o conjunto de classes
+        de equivalência induzidas por $\approx$ em $E$.
+      \item $\delta'([e]_\approx,a) = [\delta(e,a)]_\approx$.
+      \item $i' = [i]_\approx$.
+      \item $F' = \{[e]_\approx\,|\,e\in F\}$.
+    \end{itemize}
+    Visto a definição acima, temos que o problema central em minimizar um AFD é
+    encontrar a partição de seu conjunto de estados.
+  \end{Definition}
+
+  \subsection{Correção da construção do AFD mínimo}
+  
+  \begin{Lemma}
+    Se $e_1 \approx e_2$, então $\delta(e_1,a) \approx \delta(e_2, a)$.
+  \end{Lemma}
+  \begin{proof}
+    Suponha que $e_1\approx e_2$.Suponha $a\in \Sigma$, $y\in\Sigma^*$
+    arbitrários. Temos que:
+    \[
+      \begin{array}{lcl}
+        \widehat{\delta}(\delta(e_1,a),y)\in F & \leftrightarrow \\
+        \widehat{\delta}(e_1,ay) \in F         & \leftrightarrow & \{ e_1 \equiv
+                                                                   e_2\} \\
+        \widehat{\delta}(e_2,ay) \in F         & \leftrightarrow \\
+        \widehat{\delta}(\delta(e_2,a),y)\in F \\
+        
+      \end{array}
+    \]
+    Como $y \in \Sigma^*$ é arbitrário, temos que $[\delta(e_1,a)] \approx [\delta(e_2,a)]$.
+  \end{proof}
+
+  \begin{Lemma}\label{lemma136}
+    $e \in F$ se e somente se $[e]_\approx \in F'$.
+  \end{Lemma}
+  \begin{proof}$\,\,\,$\\
+    $(\to)$ Imediato pela definição de $F'$. \\
+    $(\leftarrow)$ Suponha que $[e]_\approx \in F'$. Como $[e]_\approx \in F'$, pela definição
+    de $F'$, existe $e' \in F$ tal que $e \approx e'$. Uma vez que $e \approx
+    e'$ e $e' \in F$, temos que $e \in F$.
+  \end{proof}
+
+  \begin{Lemma}\label{lemma137}
+    Para todo $w \in \Sigma^*$, $e\in E$, temos que
+    $\widehat{\delta'}([e],w) = [\widehat{\delta}(e,w)]$
+  \end{Lemma}
+  \begin{proof}
+    Suponha $w\in\Sigma^*$ arbitrário. Procederemos por indução sobre $w$.
+    \begin{itemize}
+    \item Caso base: Para $w = \lambda$, temos:
+      \[
+        \begin{array}{lc}
+          \widehat{\delta'}([e],w) & = \\
+         \lbrack e \rbrack & = \\
+          \lbrack \widehat{\delta}(e,\lambda) \rbrack
+        \end{array}
+      \]
+     \item Passo indutivo. Suponha que para todo $e\in E$, $\widehat{\delta'}([e],w) =
+       [\widehat{\delta}(e,w)]$. Suponha $a \in \Sigma$ arbitrário. Temos:
+       \[
+         \begin{array}{lcl}
+           \widehat{\delta'}([e],aw) & = & \{\textit{def. de }\widehat{\delta}.\}\\
+           \widehat{\delta'}(\delta'([e],a),w) & = &  \{\textit{def. de } \delta'\}\\
+           \lbrack\widehat{\delta'}([\delta(e,a)],w)\rbrack & = & \{H.I.\}\\ 
+           \lbrack\widehat{\delta}(\delta(e,a),w)\rbrack  & = & \{\textit{def. de }\widehat{\delta}.\}\\
+           \lbrack\widehat{\delta}(e,aw)\rbrack \\
+         \end{array}
+       \]
+    \end{itemize}
+  \end{proof}
+
+  \begin{Theorem}[Correção da construção de AFD mínimo]
+    Seja $M$ um AFD qualquer e $M'$ o seu AFD mínimo construído usando a
+    Definição \ref{afdmin}. Temos que $L(M') = L(M)$.
+  \end{Theorem}
+  \begin{proof}
+    Suponha $w\in \Sigma^*$ arbitrário. Temos:
+    \[
+      \begin{array}{lcl}
+        w \in L(M')                   & \leftrightarrow & \{\textit{definição de L(M')}\}\\
+        \widehat{\delta}(i',w) \in F' & \leftrightarrow & \{\textit{definição de i'}\} \\
+        \widehat{\delta}([i],w)\in F'  & \leftrightarrow & \{\textit{Lema }\ref{lemma137}\}\\
+        \lbrack\widehat{\delta}(i,w)\rbrack \in F' & \leftrightarrow & \{\textit{Lema }\ref{lemma136}\}\\
+        \lbrack\widehat{\delta}(i,w)\rbrack \in F  & \leftrightarrow &
+                                                                       \{\textit{definição
+                                                                       de L(M)}\}\\
+        w \in L(M)  
+      \end{array}
+    \]
+  \end{proof}
+
+  \subsection{Construção da partição de estados}
+
+  \begin{Definition}[Estados $i$-equivalentes]\label{iequiv}
+    Seja $M = (E,\Sigma,\delta, i, F)$ um  AFD. A relação $\approx_i$
+    (i-equivalência) é definida como:
+    \begin{itemize}
+      \item $e \approx_0 e'$ se, e somente se, $e,e' \in F \lor e,e' \in (E - F)$.
+      \item $e \approx_{n + 1} e'$ se, e somente se, $e \approx_n e'$ e, para
+        todo $a\in \Sigma$ temos que $\delta(e,a)\approx_n\delta(e',a)$.
+      \end{itemize}
+  \end{Definition}
+
+  \begin{Definition}{Partições sucessivas}
+    Seja $M = (E,\Sigma,\delta, i, F)$ um  AFD. Definimos as partições
+    sucessivas de $E$ com respeito a $\approx_i$ como:
+    \[
+      \begin{array}{lcl}
+        [e]_0 & = & \left\{
+                    \begin{array}{ll}
+                      F & \textit{se }e\in F \\
+                      E - F & \textit{caso contrário} \\
+                    \end{array}
+        \right. \\ \\
+        \lbrack e\rbrack_{n+1} & = & \{e' \in [e]_n\,|\,\forall a. a \in \Sigma \to
+                        \lbrack\delta(e',a)\rbrack = \lbrack\delta(e,a)\rbrack\}\\
+      \end{array}
+    \]
+    A construção iterativa da partição continua até que $[e]_n = [e]_{n + 1}$.
+  \end{Definition}
+
+  \begin{Example}
+    Para exemplificar as diversas definições apresentadas, vamos considerar o
+    AFD apresentado no início destas notas.
+    \begin{figure}[H]
+      \centering
+      \begin{tikzpicture}[node distance=2cm]
+        \node[state, initial]                (pp){$A$} ;
+        \node[state, accepting, right of=pp] (pi){$B$} ;
+        \node[state,accepting,  below of=pp] (ip){$C$} ;
+        \node[state,  below of=pi] (ii){$D$} ;
+
+        \draw (pp) edge[bend left, above]     node{$1$} (pi)
+              (pi) edge[bend left, below]     node{$1$} (pp)
+              (pp) edge[bend left, left]      node{$0$} (ip)
+              (ip) edge[bend left, left]      node{$0$} (pp)
+              (pi) edge[bend left, left]     node{$0$} (ii)
+              (ii) edge[bend left, left]     node{$0$} (pi)
+              (ip) edge[bend left, above]    node{$1$} (ii)
+              (ii) edge[bend left, below]    node{$1$} (ip) ; 
+      \end{tikzpicture}              
+    \end{figure}
+
+    Para encontrar o AFD mínimo equivalente ao acima apresentado, devemos
+    construir a partição de seu conjunto de estados. Para isso, utilizaremos
+    uma tabela para armazenar a configuração intermediária da partição.
+    No primeiro momento, apresentamos a partição para $n = 0$.
+    \begin{figure}[H]
+      \begin{tabular}{|c|l|}
+        \hline
+        $n$ & Partição \\ \hline
+        0   & $\{A,D\}\{B,C\}$ \\\hline
+      \end{tabular}
+      \centering
+    \end{figure}
+    Note que na primeira iteração, dividimos o conjunto de estados em dois
+    subconjuntos contendo os estados finais e não finais. Nessa etapa,
+    podemos afirmar que $A \approx_0 D$ e que $B\approx_0 C$.
+
+    Para a iteração 1, devemos verificar se $A \approx_1 D$. Para isso, vamos
+    recorrer a Definição \ref{iequiv}, que especifica:
+    \[
+      A \approx_1 D \leftrightarrow A\approx_0 D \land \forall a \in \Sigma.
+      \delta(A,a) \approx_0 \delta(D,a).
+    \]
+    Isto é, para $A$ e $D$ serem $1$-equivalentes eles devem: 1) ser
+    0-equivalentes e; 2) o resultado de toda transição saindo desses estados
+    também deve ser 0-equivalente. Uma vez que $A \approx_0 B$, basta verificar
+    se o resultado de cada uma das transições também é 0-equivalente.
+
+    Para $a = 0$, temos que $\delta(A,0) = C \approx_0 B = \delta(D,0)$. Por sua
+    vez, para $a = 1$, temos que $\delta(A,1) = B \approx_0 C = \delta(D,1)$.
+    Dessa forma, temos que $A \approx_1 D$.
+
+    Seguindo um raciocínio similar, podemos constatar que $B \approx_1 C$. Logo,
+    chegamos no seguinte resultado.
+    \begin{figure}[H]
+      \begin{tabular}{|c|l|}
+        \hline
+        $n$ & Partição \\ \hline
+        0   & $\{A,D\}\{B,C\}$ \\\hline
+        1   & $\{A,D\}\{B,C\}$ \\\hline        
+      \end{tabular}
+      \centering
+    \end{figure}
+    Como $[e]_n = [e]_{n + 1}$, temos que a partição de estados para o AFD é
+    $\{\{A,D\},\{B,C\}\}$.
+
+    Finalmente, aplicando a construção da Definição \ref{afdmin}, obtemos o
+    seguinte AFD:
+    \begin{figure}[H]
+      \begin{tikzpicture}
+          \node[state,initial](p){$\{A,D\}$} ;
+          \node[state, accepting, right of=p] (i){$\{B,C\}$} ;
+          
+          \draw (p) edge[bend left, above] node{$0,1$} (i)
+                (i) edge[bend left, below] node{$0,1$} (p) ;
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+  \end{Example}
+
+  \begin{Example}
+    Nesse exemplo vamos construir o AFD mínimo equivalente ao seguinte AFD:
+    \begin{figure}[H]
+      \begin{tikzpicture}[node distance=2cm]
+        \node[state,initial](s0){$\lambda$};
+        \node[state,accepting, below right of=s0](s1){$c$};
+        \node[state, above right of=s0](e){$e$} ;
+
+        \draw (s0) edge [above] node{$0$} (s1)
+              (s0) edge [above] node{$1$} (e)
+              (s1) edge [loop right] node{$0,1$} (s1)
+              (e) edge [loop right] node{$0,1$} (e)  ;            
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    Construindo a partição para $n = 0$.
+    \begin{figure}[H]
+      \begin{tabular}{|c|l|}
+        \hline
+        $n$ & Partição \\ \hline
+        0   & $\{c\}\{\lambda, e\}$ \\\hline
+      \end{tabular}
+      \centering
+    \end{figure}
+    Note que a única possibilidade de evolução dessa partição é pela verificação
+    de $\lambda \approx_1 e$. Porém, veja que $\delta(\lambda,0) = C
+    \not\approx_0 e = \delta(e,0)$. Dessa forma, temos que $\lambda
+    \not\approx_1 e$ e, portanto, esses estados devem estar em conjuntos
+    diferentes na partição.
+    \begin{figure}[H]
+      \begin{tabular}{|c|l|}
+        \hline
+        $n$ & Partição \\ \hline
+        0   & $\{c\}\{\lambda, e\}$ \\\hline
+        1   & $\{c\}\{\lambda\}\{e\}$ \\ \hline
+      \end{tabular}
+      \centering
+    \end{figure}
+    Observe que na iteração $1$ obtivemos uma partição que é formada
+    apenas por conjuntos unitários. O que esse fato quer dizer? Observe que
+    cada conjunto de estados de uma partição contém todos os estados
+    equivalentes entre si. Se a partição é formada apenas por conjuntos
+    unitários, isso evidencia que o AFD em questão já é o mínimo.
+  \end{Example}
+
+  \begin{Example}
+    Construa o AFD mínimo equivalente ao AFD apresentado a seguir.
+    \begin{figure}[H]
+      \begin{tikzpicture}[node distance=2cm]
+        \node[state, initial](s0){$0$} ;
+        \node[state, above right of=s0] (s1){$1$} ;
+        \node[state, below right of=s0] (s2){$2$} ;
+        \node[state, accepting, right of=s1] (s3) {$3$} ;
+        \node[state, accepting, right of=s2] (s4) {$4$} ;
+        \node[state, accepting, right=3.75 of s0](s5) {$5$} ;
+
+        \draw (s0) edge[above] node{$a$} (s1)
+              (s0) edge[above] node{$b$} (s2)
+              (s1) edge[above] node{$a$} (s3)
+              (s1) edge[right] node{$b$} (s4)
+              (s2) edge[above] node{$a$} (s4)
+              (s2) edge[left]  node{$b$} (s3)
+              (s3) edge[left] node{$a,b$} (s5)
+              (s4) edge[left] node{$a,b$} (s5)
+              (s5) edge[loop right] node{$a,b$} (s5) ;
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    Temos a seguinte partição inicial dos estados:
+    \begin{figure}[H]
+      \begin{tabular}{|c|l|}
+        \hline
+        $n$ & Partição \\ \hline
+        0   & $\{0,1,2\}\{3,4,5\}$ \\\hline
+      \end{tabular}
+      \centering
+    \end{figure}
+    Como temos mais estados nos conjuntos, temos mais possibilidades para o
+    mesmo conjunto. Por exemplo, temos que verificar, no primeiro conjunto, se
+    $0 \approx_1 1$ e $1\approx_1 2$.
+    
+    Primeiramente, para $0 \approx_1 1$ temos que $\delta(0,a) = 1 \not\approx_0
+    3 = \delta(1,a)$. Logo, $0\not\approx_1 1$ e, portanto, esses dois estados
+    não devem ficar no mesmo conjunto. Por sua vez, temos que $1 \approx_1 2$,
+    uma vez que $\delta(1,a) = 3 \approx_0 4 = \delta(2,a)$ e
+    $\delta(1,b) = 4 \approx_0 3 = \delta(2,b)$. Dessa forma, temos que o estado
+    $0$ deve ser removido desse conjunto. Com isso, temos a seguinte partição
+    intermediária. Omitiremos a verificação de que os estados $3,4$ e $5$ são
+    equivalentes, pois essa será repetida no próximo passo.
+    \begin{figure}[H]
+      \begin{tabular}{|c|l|}
+        \hline
+        $n$ & Partição \\ \hline
+        0   & $\{0,1,2\}\{3,4,5\}$ \\\hline
+        1   & $\{0\},\{1,2\},\{3,4,5\}$ \\ \hline
+      \end{tabular}
+      \centering
+    \end{figure}
+    Para construir a partição da iteração 2, pode-se ver que os estados $1$ e
+    $2$ são equivalantes. Logo, para finalizar a partição basta verificar se
+    os estados $3,4$ e $5$ são equivalentes. Note que os estados 3 e 4 são
+    equivalentes pois ambos tem transições apenas para o estado 5. Logo,
+    $3 \approx_2 4$. Da mesma forma, temos que $3 \approx_2 5$ pois o 5 tem
+    apenas um ciclo. Logo os estados 3, 4 e 5 são equivalentes. Com isso, temos
+    a seguinte partição final.
+    \begin{figure}[H]
+      \begin{tabular}{|c|l|}
+        \hline
+        $n$ & Partição \\ \hline
+        0   & $\{0,1,2\}\{3,4,5\}$ \\\hline
+        1   & $\{0\},\{1,2\},\{3,4,5\}$ \\ \hline
+        2   & $\{0\},\{1,2\},\{3,4,5\}$ \\ \hline
+      \end{tabular}
+      \centering
+    \end{figure}
+    A seguir, apresentamos a construção do AFD mínimo usando a partição obtida.
+    \begin{figure}[H]
+      \begin{tikzpicture}[node distance=3cm]
+        \node[state, initial](s0){$0$} ;
+        \node[state, right of=s0](s1){$\{1,2\}$} ;
+        \node[state, accepting, right of=s1](s2){$\{3,4,5\}$} ;
+        \draw (s0) edge[above] node{$a,b$} (s1)
+              (s1) edge[above] node{$a,b$} (s2)
+              (s2) edge[loop right] node{$a,b$} (s2) ;
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+  \end{Example}
+  
+  \section{Exercícios}
+
+  \begin{enumerate}
+    \item Apresente AFDs para as seguintes linguagens sobre $\Sigma = \{0,1\}$ e
+      o respectivos AFDs mínimos.
+      \begin{enumerate}
+        \item Palavras cujo tamanho é múltiplo de 4.
+        \item Palavras que terminam em 11.
+        \item Palavras que não possuem nenhuma ocorrência de 000.
+        \item Palavras que possuem um número par de 0's.
+        \item Palavras que possuem um número par de 0's e ímpar de 1's.
+      \end{enumerate}
+    \item Prove que $\approx$ é uma relação de equivalência.
+    \item O Prof. Mipha Laram argumenta que pode-se obter AFDs mais eficientes
+      por executar o processo de minimização de AFDs uma segunda vez. Mostre,
+      utilizando as definições apresentadas nesta aula, que o argumento do Prof.
+      Mipha Laram é incorreto.
+  \end{enumerate}
+\end{document}

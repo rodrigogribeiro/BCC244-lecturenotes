@@ -1,0 +1,328 @@
+\documentclass[a4paper]{article}
+
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{proof,tikz}
+\usepackage{amssymb,amsthm,stmaryrd}
+
+
+\usepackage[edges]{forest}
+
+
+\newtheorem{Lemma}{Lema}
+\newtheorem{Theorem}{Teorema}
+\theoremstyle{definition}
+\newtheorem{Example}{Exemplo}
+\newtheorem{Definition}{Definição}
+
+
+\usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \lhead{Teoria da Computação}
+  \rhead{Aula 1}
+  \lfoot{Prof. Rodrigo Ribeiro}
+  \rfoot{\thepage}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \pagestyle{fancy}
+
+
+\begin{document}
+
+  \title{Aula 1 - Introdução às linguagens formais}
+  \author{Rodrigo Ribeiro}
+
+  \maketitle
+
+
+  \pagestyle{fancy}
+
+
+  \section*{Objetivos}
+
+  \begin{itemize}
+     \item Apresentar os conceitos centrais da teoria de
+       linguagens: alfabeto, palavra, linguagem e
+       problemas de decisão.
+     \item Especificação de linguagens usando conjuntos.
+  \end{itemize}
+
+  \section{Conceitos básicos}
+
+  \begin{Definition}[Alfabeto]
+    Um alfabeto é qualquer conjunto finito não vazio. Usaremos a letra grega
+    sigma, $\Sigma$, para representar um alfabeto qualquer.
+  \end{Definition}
+
+  \begin{Example}
+    Dois alfabetos importantes são $\Sigma_1= \{1\}$ e $\Sigma_2 =\{0,1\}$. Caso
+    desejamos lidar com texto, um possível alfabeto é o UNICODE.
+  \end{Example}
+
+  \begin{Definition}[Palavra]
+    Uma palavra sobre um alfabeto $\Sigma$ é uma sequência
+    finita formada por elementos de $\Sigma$.
+  \end{Definition}
+
+  \begin{Definition}[Tamanho de uma palavra, palavra vazia]
+    Seja $w$ uma palavra qualquer sobre um alfabeto $\Sigma$. Denomina-se
+    por tamanho de $w$, $|w|$, o número de símbolos de $w$. Em especial,
+    existe apenas uma palavra de tamanho $0$, e esta é representada pela
+    letra grega $\lambda$.
+  \end{Definition}
+
+  \begin{Example}
+    São exemplos de palavras sobre $\Sigma=\{0,1\}$: $0,1,00,1101,\lambda$.
+    São exemplos de palavras sobre $\Sigma =\{1\}$: $\lambda,1,11,...$.
+    Note que $\lambda$ é uma palavra sobre qualquer alfabeto.
+  \end{Example}
+
+  \begin{Definition}[Repetição]
+    Denotamos por $a^n$, em que $a \in \Sigma$, a palavra formada por
+    $n$ ocorrências do símbolo $a$. Formalmente:
+    \[
+      \begin{array}{lcl}
+        a^0      & = & \lambda \\
+        a^{n + 1} & = & a^n a\\
+      \end{array}
+    \]
+  \end{Definition}
+
+  \begin{Example}
+    Considere $\Sigma = \{0,1\}$. Temos que $0^3 = 000$, $1^4 = 1111$ e $1^0 = \lambda$.
+  \end{Example}
+
+  \begin{Definition}[Concatenação]
+    Sejam $x$ e $y$ duas palavras sobre um alfabeto $\Sigma$. A concatenação de
+    $x$ e $y$ é a simples justaposição de $y$ ao fim da palavra $x$ e é
+    representada por $xy$.
+  \end{Definition}
+  \begin{Example}
+    Considere $\Sigma = \{0,1\}$, $x = 001$, $y = 01$ e $z = 11$. Temos que:
+    \begin{itemize}
+      \item $xy = 00101$.
+      \item $yx = 01001$.
+      \item $\lambda x = x \lambda = x$.
+      \item $(xy)z = 0010111$ e $x(yz) = 0010111$.
+    \end{itemize}
+    Note que a concatenação é uma operação associativa, isto é, para quaisquer
+    palavras $x$, $y$ e $z$ temos que $x(yz) = (xy)z$. Além disso, $\lambda$ é
+    o elemento neutro da concatenação, isto é, para qualquer palavra $x$,
+    $x\lambda = \lambda x = x$.
+  \end{Example}
+  \begin{Definition}[Concatenação repetida]
+    Seja $w$ uma palavra qualquer sobre um alfabeto $\Sigma$. A concatenação
+    repetida de $w$, $w^n$, é definida por recursão sobre $n$ como:
+    \[
+      \begin{array}{lcl}
+        w^0 & = & \lambda\\
+        w^{n + 1} & = & w^nw\\
+      \end{array}
+    \]
+  \end{Definition}
+  \begin{Example}
+    Alguns exemplos da operação de concatenação repetida:
+    \begin{itemize}
+      \item $(01)^3 = 010101$; $(110)^0 = \lambda$ e $(110)^3 = 110110110$.
+    \end{itemize}
+  \end{Example}
+
+  \section{Linguagens e operações}
+
+  \begin{Definition}[Linguagem]
+    Seja $\Sigma$ um alfabeto. Denominamos por linguagem um conjunto de palavras
+    sobre $\Sigma$. 
+  \end{Definition}
+
+  \begin{Example}
+    Como linguagens são conjuntos de palavras, existem linguagens finitas e
+    infinitas. Além disso, podemos nos valer de diversas operações sobre
+    conjuntos para definir linguagens.
+    \begin{itemize}
+      \item $\emptyset$, é uma linguagem sobre qualquer alfabeto.
+      \item $\{0, \lambda\}$ é uma linguagem sobre $\Sigma =\{0,1\}$.
+      \item $\{(01)^n\,|\,n \geq 0\}$ é linguagem de palavras formadas por
+        sequencias sobre $01$.
+      \item $\{1^n| n \geq 1\} \cup \{0^n| 1 \leq n \leq 10\}$ é a linguagem
+           formada por um prefixo de $n \geq 0$ 1's seguido de um sufixo $1 \leq
+           p \leq 10$ 1's.
+    \end{itemize}
+  \end{Example}
+
+  \begin{Definition}[Outras operações sobre palavras]
+    Seja $w = a_1a_2...a_n$ uma palavra sobre um alfabeto $\Sigma$. Denomina-se
+    \emph{reverso} de $w$, $w^R$, a palavra $w^R = a_n a_{n - 1}...a_2a_1$.
+    Em especial, diz-se que uma palavra $w$ é um \emph{palíndromo} se
+    $w = w^R$.  Seja $w = xyz$, em que tanto $x$, $y$ e $z$ podem ser $\lambda$
+    ou não. Dizemos que $y$ é uma \emph{subpalavra} de $w$, $x$ é um
+    \emph{prefixo} de $w$ e $z$ é um \emph{sufixo} de $w$. Em particular, tanto
+    $\lambda$ quanto $w$ são prefixo, sufixo e subpalavra de $w$.
+  \end{Definition}
+
+  \begin{Example}
+    Seja $\Sigma = \{0,1\}$. Temos que $(100)^R = 001$ e a palavra $101$ é um
+    palíndromo, visto que $101 = (101)^R$. Seja $w = 010$. Temos que
+    $\lambda, 0,01$ e $010$ são prefixos de $w$. Por sua vez,
+    $\lambda,1, 01$ e $010$ são sufixos de $w$. As subpalavras de $w$ são
+    $\lambda, 0, 1, 01, 10, 010$.
+  \end{Example}
+
+  \begin{Definition}[Concatenação de linguagens]
+    Sejam $L_1$ e $L_2$ duas linguagem sobre um alfabeto $\Sigma$. Denotamos
+    a concatenação de $L_1$ com $L_2$, $L_1L_2$, como o seguinte conjunto:
+    \[
+      L_1L_2 = \{w_1w_2\,|\,w_1 \in L_1 \land w_2 \in L_2\}
+    \]
+  \end{Definition}
+  \begin{Example}
+    Seja $\Sigma = \{0,1\}$, $L_1 = \{0,01,11\}$ e $L_2 = {1,\lambda}$. Temos
+    que $L_1L_2$ é o conjunto
+    \[
+      L_1L_2 =\{01, 0, 011, 111, 11\}
+    \]
+    Um outro exemplo: Considere $\{0,1\}\{0,1\}$ é igual a:
+    \[
+      \{0,1\}\{0,1\} = \{00,01,10,11\}
+    \]
+  \end{Example}
+
+  \begin{Definition}[Concatenação repetida de linguagens]
+    Seja $L$ uma linguagem sobre um alfabeto $\Sigma$. A concatenação
+    repetida de $L$, $L^n$, é definida por recursão sobre $n$ como:
+    \[
+      \begin{array}{lcl}
+        L^0 & = & \{\lambda\}\\
+        L ^{n + 1} & = & L^n\,L
+      \end{array}
+    \]
+  \end{Definition}
+
+  \begin{Example}
+    Seja $L = \{01,0\}$ uma linguagem sobre $\Sigma = \{0,1\}$. Temos que:
+    \[
+      \begin{array}{lcl}
+        L^2 & = & L^{2 - 1} L \\
+            & = & L^1 L \\
+            & = & (L^0 L) L \\
+            & = & (\{\lambda\} L) L \\
+            & = & (\{\lambda\} \{01,0\})\{01,0\} \\
+            & = & \{01,0\}\{01,0\} \\
+            & = & \{0101, 010, 001, 00\}\\
+      \end{array}
+    \]
+    Ainda considerando $\Sigma = \{0,1\}$, temos que $\Sigma^3$ é definido como:
+    \[
+      \begin{array}{lcl}
+        \Sigma^3 & = & \Sigma^2 \Sigma \\
+                 & = & (\Sigma^1 \Sigma) \Sigma \\
+                 & = & ((\Sigma^0 \Sigma) \Sigma) \Sigma \\
+                 & = & ((\{\lambda\}\Sigma)\Sigma) \Sigma \\
+                 & = & (\Sigma \Sigma) \Sigma \\
+                 & = & (\{0,1\}\{0,1\})\{0,1\} \\
+                 & = & (\{00,01,10,11\})\{0,1\} \\
+                 & = & \{000, 001, 010, 011, 100, 101, 110, 111\}
+      \end{array}
+    \]
+    Observe que $\Sigma^n$ produz o conjunto de todas as palavras de tamanho $n$
+    para um alfabeto $\Sigma$.
+  \end{Example}
+
+  \begin{Definition}{Fecho de Kleene}
+    Seja $L$ uma linguagem sobre um alfabeto $\Sigma$. Definimos o fecho de
+    Kleene de $L$, $L^*$, como:
+    \[
+      L^* = \bigcup_{n \in\mathbb{N}}L^n
+    \]
+    Isto é, $L^*$ é a união de todos os $L^n$ para $n \in \mathbb{N}$. Outra
+    forma de definir $L^*$ é usando uma definição recursiva como a seguinte:
+    \begin{itemize}
+       \item $\lambda \in L^*$.
+       \item Se $x \in L^*$ e $y \in L$ então $xy \in L^*$.
+    \end{itemize}
+    Em particular, define-se o fecho positivo de Kleene de $L$, $L^+$, como
+    \[
+      L^+ = \bigcup_{n \in\mathbb{N} - \{0\}}L^n
+    \]
+    Finalmente, note que $L^* = L^+ \cup \{\lambda\}$.
+  \end{Definition}
+
+  \begin{Example}
+    Segue alguns exemplos do fecho de Kleene de algumas linguagens.
+    \begin{itemize}
+      \item $\emptyset^* = \{\lambda\}$ e $\emptyset^+ = \emptyset$.
+      \item $\{\lambda\}^* = \{\lambda\}^+ = \{\lambda\}$.
+      \item $\{1\}^* = \{1^n\,|\,n \in \mathbb{N}\}$.
+      \item $\{\lambda,00,11\}^* = \{\lambda\} \cup \{00,11\}^*$.
+    \end{itemize}
+    Em particular, $\Sigma^*$ denota o conjunto de todas as palavras,
+    de todos os tamanhos para um certo alfabeto $\Sigma$. Além disso,
+    podemos dizer que $L$ é uma linguagem sobre um alfabeto $\Sigma$
+    simplesmente especificando que $L \subseteq \Sigma^*$.
+  \end{Example}
+
+  \section{Especificando linguagens usando conjuntos}
+
+  A seguir apresentamos alguns exemplos ilustrando o uso de operações
+  e notações da teoria de conjuntos e operações recém definidas sobre
+  linguagens para especifar novas linguagens.
+
+  \begin{Example}
+    A seguir apresentamos uma descrição textual de uma linguagem
+    e em seguida apresentamos sua descrição como conjunto.
+    \begin{itemize}
+      \item Conjunto de palavras que começam com 0: $\{0\}\{0,1\}^*$.
+            Observe que $\{0,1\}^*=\{\lambda,0,1,00,01...\}$. Logo,
+            Concatenando a linguagem $\{0\}$ a $\{0,1\}^*$ irá produzir
+            $\{0\}\{0,1\}^* = \{0,00,01, 000, ...\}$, como requerido.
+      \item Conjunto de palavras que terminam em 00: $\{0,1\}^*\{00\}$.
+      \item Conjunto de palavras que contém 00 ou 11:
+        $\{0,1\}^*\{00,11\}\{0,1\}^*$.
+      \item Conjunto de palavras de tamanho par: $(\{0,1\}^2)^*$.
+      \item Conjunto de palavras de tamanho par que começam com 0:
+            $(\{0,1\}^2)^* \cap \{0\}\{0,1\}^*$.  
+    \end{itemize}
+  \end{Example}
+
+
+  \section{Problemas de decisão}
+
+  \begin{Definition}[Problema de decisão]
+    Um problema de decisão é uma questão que faz referência a um
+    conjunto finito de parâmetros, e que, para valores específicos dos
+    parâmetros, tem como resposta sim ou não.
+  \end{Definition}
+
+  \begin{Example}
+    A seguir apresentamos alguns exemplos de problemas de decisão.
+    \begin{itemize}
+      \item Determinar se $n \in \mathbb{N}$ é um número primo.
+      \item Determinar se um grafo $G$ possui um ciclo.
+      \item Determinar se um grafo possui um ciclo hamiltoniano.
+      \item Determinar se um programa pára com uma determinada entrada.
+    \end{itemize}  
+  \end{Example}
+  
+  \section{Exercícios}
+
+  \begin{enumerate}
+    \item Apresente uma definição recursiva para o fecho positivo de Kleene para
+      uma linguagem $L$.
+    \item Apresente definições, usando operações de conjuntos, para as seguintes
+      linguagens. Considere $\Sigma = \{0,1\}$.
+      \begin{enumerate}
+         \item Palavras que contém pelo menos um 0.
+         \item Palavras de tamanho ímpar.
+         \item Palavras que não possuem nenhuma ocorrência de 00.
+         \item Palavras em que todo 0 é seguido por pelo menos dois 1's.
+           Exemplo: $\lambda, 1, 1111, 011, 11101101111,...$.
+      \end{enumerate}
+      \item Apresente definições recursivas para as seguintes linguagens.   
+      \begin{enumerate}
+         \item $\{0\}^*\{1\}^*$.
+         \item $\{0^n1^n\,|\,n\in\mathbb{N}\}$.
+      \end{enumerate}
+  \end{enumerate}
+\end{document}

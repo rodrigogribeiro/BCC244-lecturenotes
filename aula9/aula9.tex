@@ -1,0 +1,317 @@
+\documentclass[a4paper]{article}
+
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{proof,tikz}
+\usepackage{amssymb,amsthm,stmaryrd}
+
+
+\usepackage[edges]{forest}
+\usetikzlibrary{automata, positioning, arrows}
+
+
+\newtheorem{Lemma}{Lema}
+\newtheorem{Theorem}{Teorema}
+\theoremstyle{definition}
+\newtheorem{Example}{Exemplo}
+\newtheorem{Definition}{Definição}
+
+
+\usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \lhead{Teoria da Computação}
+  \rhead{Aula 9}
+  \lfoot{Prof. Rodrigo Ribeiro}
+  \rfoot{\thepage}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \pagestyle{fancy}
+
+\tikzset{
+        ->,  % makes the edges directed
+        >=stealth', % makes the arrow heads bold
+        node distance=2cm,
+        every state/.style={thick, fill=gray!10},
+        initial text=$\,$
+        }
+  
+
+\begin{document}
+
+  \title{Aula 9 - Gramáticas regulares e problemas de decisão para LRs.}
+  \author{Rodrigo Ribeiro}
+
+  \maketitle
+
+
+  \pagestyle{fancy}
+
+
+  \section*{Objetivos}
+
+  \begin{itemize}
+     \item Apresentar os conceito de gramática, derivação e linguagem gerada por
+       uma gramática.
+     \item Apresentar a definição de gramática regular e sua equivalência com
+       autômatos finitos.
+     \item Apresentar alguns problemas de decisão para LRs.
+  \end{itemize}
+
+  \section{Gramáticas}
+
+  \begin{Definition}[Gramática]
+    Uma gramática $G=(V,\Sigma,R,P)$ é uma quádrupla em que:
+    \begin{itemize}
+       \item $V$: conjunto finito de variáveis.
+       \item $\Sigma$: alfabeto
+       \item $R\subseteq (V \cup \Sigma)^+ \times (V\cup \Sigma^*)$: conjunto de
+         regras.
+       \item $P\in V$: variável de partida.
+    \end{itemize}
+  \end{Definition}
+
+  \begin{Example}
+    Assim como autômatos são representados, informalmente, usando grafos
+    dirigidos, gramáticas são representadas informalmente por uma sequência
+    de suas regras. A definição matemática de uma gramática mostra que uma
+    regra é apenas um par: $(x,y)$. Porém, para melhor visualização, regras
+    são representadas usando a seguinte notação: $x \to y$.
+
+    Abaixo apresentamos um exemplo de gramática.
+    \[
+      \begin{array}{lcl}
+        A & \to & 0A1 \,|\, \lambda
+      \end{array}
+    \]
+
+    A gramática acima é formada por duas regras: 1) $A \to 0A1$ e 2 $A \to
+    \lambda$. Normalmente, omitidos o lado esquerdo de regras consecutivas
+    que compartilham o mesmo lado esquerdo. Para isso, simplesmente usamos
+    o símbolo $|$.
+
+    A gramática acima é formalmente representada por $(\{A\},\{0,1\},R,A)$, em
+    que $R =\{(A,0A1),(A,\lambda)\}$.
+
+    A seguir, apresentamos o mecanismo de produção de palavras
+    em uma gramática.
+  \end{Example}
+
+  \begin{Definition}[Derivação]
+    Seja $G = (V,\Sigma,R,P)$ uma gramática qualquer.
+    Dizemos que $x \Rightarrow
+    y$ em $G$, em que $x,y \in (V\cup \Sigma)^*$, se  há uma regra $u \to v \in
+    R$ tal que $u$ ocorre em $x$ e $y$ é o resultado de substituir uma
+    ocorrência de $u$ em $x$ por $v$. A relação $\Rightarrow^n$ é definida 
+    recursivamente como:
+    \begin{itemize}
+      \item $x \Rightarrow^0 x$ para todo $x \in (V \cup \Sigma)^*$;
+      \item $w \Rightarrow^n x u y$ e $u \to v \in R$ então $w \Rightarrow^{n +
+          1}x v y$; para todo $w,x,y \in (V\cup \Sigma)^*$, $n\geq 0$.
+    \end{itemize}
+    Finalmente, dizemos que $x$ deriva $y$, $x\Rightarrow^*y$, se existe 
+    $n\geq 0$ tal que $x\Rightarrow^n y$.
+  \end{Definition}
+
+  \begin{Example}
+    Vamos considerar a seguinte gramática:
+    \[
+      \begin{array}{lcl}
+        A & \to & 0A1 \,|\, \lambda
+      \end{array}
+    \]
+    Abaixo, mostramos a derivação de $0011$.
+    \[
+      \begin{array}{lcl}
+        A   & \Rightarrow & \{A \to 0A1\}\\
+        0A1 & \Rightarrow & \{A \to 0A1\}\\
+        00A11 & \Rightarrow & \{A \to \lambda\} \\
+        0011
+      \end{array}
+    \]
+  \end{Example}
+
+  \begin{Definition}[Linguagem gerada por uma gramática]
+    Seja $G = (V,\Sigma,R,P)$ uma gramática qualquer. A linguagem gerada por
+    $G$, $L(G)$, é definida como:
+    \[
+      L(G) = \{w \in \Sigma^* \,|\, P \Rightarrow^* w\}
+    \]
+  \end{Definition}
+
+  \section{Gramáticas regulares}
+
+  \begin{Definition}[Gramática regular]\label{gramreg}
+    Seja $G = (V,\Sigma,R,P)$ uma gramática. Dizemos que $G$ é uma gramática
+    regular (GR), se todas as suas regras possuem uma das formas:
+    \begin{itemize}
+      \item $X \to a$
+      \item $X \to aZ$
+      \item $X \to \lambda$
+    \end{itemize}
+    Para $X,Z \in V$, $a \in \Sigma$.  
+  \end{Definition}
+
+  \begin{Example}
+    A seguinte gramática
+    \[
+      \begin{array}{lcl}
+        A & \to & 0A1 \,|\, \lambda
+      \end{array}
+    \]
+    não é uma GR. Pois a regra $A \to 0A1$ não está de acordo com a Definição
+    \ref{gramreg}. Por sua vez, a seguinte gramática é uma GR:
+    \[
+      \begin{array}{lcl}
+        A & \to & 0A \,|\,0\,|\,1B \\
+        B & \to & 1B \,|\,\lambda
+      \end{array}
+    \]
+    A próxima subseção descreverá a equivalência entre GR e AFs.
+  \end{Example}
+
+  \subsection{Construindo um AF a partir de uma GR}
+
+  \begin{Theorem}\label{teorema1}
+    Toda gramática regular gera uma linguagem regular.
+  \end{Theorem}
+  \begin{proof}
+    Seja $G = (V,\Sigma,R,P)$ uma GR. O AFN $M = (E, \Sigma, \delta, \{P\}, F)$
+    é tal que $L(G) = L(M)$, em que:
+    \begin{itemize}
+      \item $E = \left\{ \begin{array}{ll}
+                         V \cup \{Z\} & \textit{se R possui alguma regra }X \to
+                                        a\\
+                         V            & \textit{caso contrário}
+                       \end{array}\right.$
+      \item $\delta(X,a) = \left\{
+          \begin{array}{ll}
+            \{Y\} & \textit{se R possuir a regra }X \to aY\\
+            \{Z\} & \textit{se R possuir a regra }X \to a\\
+          \end{array}  
+        \right.$
+      \item $F = \left\{
+          \begin{array}{ll}
+            \{X\,|\,X \to \lambda\} \cup \{Z\} & \textit{se existe regra }X \to a\\
+            \{X\,|\,X \to \lambda\} & \textit{caso contrário.}
+          \end{array}
+                \right.$
+    \end{itemize}
+    Pode-se mostrar que $P \Rightarrow^* w$ se e somente se
+    $\widehat{\delta}(P,w)\cap F \neq \emptyset$ por indução sobre $w$.          
+  \end{proof}
+
+  \begin{Example}
+    Considere a seguinte gramática regular:
+    \[
+      \begin{array}{lcl}
+        A & \to & 0A \,|\, 1B \,|\, \lambda \\
+        B & \to & 1B \,|\, 1
+      \end{array}
+    \]
+    A partir dessa GR, podemos construir o seguinte AF:
+    \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state,initial,accepting](s0){$A$} ;
+        \node[state, right of=s0](s1){$B$} ;
+        \node[state,accepting, right of=s1](z){$Z$};
+        \draw (s0) edge[loop above]node{$0$}(s0)
+              (s0) edge[above]node{$1$}(s1)
+              (s1) edge[loop above]node{$1$}(s1)
+              (s1) edge[above]node{$1$}(z);
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    
+  \end{Example}
+  
+  \subsection{Construindo uma GR a partir de um AF}
+
+  \begin{Theorem}\label{teorema2}
+    Toda linguagem regular é gerada por uma gramática regular.
+  \end{Theorem}
+  \begin{proof}
+    Seja $M = (E,\Sigma,\delta,i,F)$ um AFD. A GR $G = (E,\Sigma, R, i)$ é tal
+    que $L(G) = L(M)$, em que:
+    \[
+      R = \{e \to ae' \,|\,e'\in\delta(e,a)\} \cup \{e \to \lambda\,|\,e \in F\}
+    \]
+  \end{proof}
+
+  \begin{Example}
+    Como exemplo da construção do Teorema \ref{teorema2}, considere o seguinte
+    AF:
+    \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state,initial](s0){$A$};
+        \node[state, accepting, right of=s0](s1){$B$};
+        \node[state, below of=s0](s2){$C$} ;
+        \node[state, right of=s2](s3){$D$} ;
+        \draw (s0)edge[bend left, right]node{$a$}(s2)
+              (s1)edge[bend left, right]node{$a$}(s3)
+              (s3)edge[bend left, left]node{$a$}(s1)        
+              (s0)edge[above]node{$b$}(s1)
+              (s2)edge[above]node{$b$}(s3)
+              (s2)edge[bend left, left]node{$a$}(s0) ;
+       
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    A partir deste, podemos obter a seguinte gramática regular:
+    \[
+      \begin{array}{lcl}
+        A & \to & aC \,|\, bB \\
+        B & \to & aD \,|\, \lambda\\
+        C & \to & aA \,|\, bD \\
+        D & \to & aB
+      \end{array}
+    \]
+  \end{Example}
+  
+
+  \section{Problemas de decisão para LRs}
+
+  Os seguintes problemas de decisão sobre LRs são decidíveis (isto é, existem algoritmos
+  que terminam e dão a resposta correta para todas as entradas):
+  \begin{enumerate}
+    \item Determinar se uma LR $L$ é infinita. Se $L$ é uma LR, existe um AFD
+      $M$ para $L$. Sabe-se que a linguagem de um AFD é infinita se este possui
+      um ciclo. Logo, o algoritmo para determinar se uma LR é infinita consiste
+      em testar se o grafo correspondente ao seu AFD possui ciclos.
+    \item Determinar se $L(M) = \emptyset$ para um AF $M$. Para saber se a
+      linguagem aceita por um AF é vazia basta determinar se existe um caminho
+      entre o estado inicial e algum estado final, o que pode ser determinado
+      por um algoritmo de caminhamento em grafos.
+    \item Dados dois AFs $M_1$ e $M_2$ determinar se $L(M_1) = L(M_2)$. Sejam
+      $M'_1$ o AFD mínimo equivalente a $M_1$ e $M'_2$ o AFD mínimo equivalente
+      a $M_2$. Temos que $L(M_1) = L(M_2)$ se, e somente se, os grafos
+      correspondentes a $M'_1$ e $M'_2$ forem isomórficos.
+  \end{enumerate}
+  
+  \section{Exercícios}
+
+  \begin{enumerate}
+     \item Para cada linguagem abaixo, apresente um AFD para a mesma. A partir
+       do AFD apresentado, construa a GR usando a técnica do
+       Teorema~\ref{teorema2}.
+       \begin{enumerate}
+         \item Palavras que começam e terminam com 1.
+         \item Palavras que começam e terminam com 1 e tem pelo menos um 0.
+         \end{enumerate}
+      \item Utilizando a construção do Teorema \ref{teorema1}, apresente AFs
+        para a seguinte GR.
+    \[
+      \begin{array}{lcl}
+        A & \to & 0A \,|\,0\,|\,1B \\
+        B & \to & 1B \,|\,\lambda
+      \end{array}
+    \]
+      \item Apresente um algoritmo para decidir o seguinte problema: Dadas duas
+        expressões regulares $e_1$  e $e_2$, decidir se $L(e_1) \subseteq
+        L(e_2)$.
+      \item Apresente um algoritmo para decidir o seguinte problema: Dados dois
+        AF's $M_1$ e $M_2$, determinar se $L(M_1)$ e $L(M_2)$ são disjuntas.
+      \end{enumerate}
+\end{document}

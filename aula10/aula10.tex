@@ -1,0 +1,234 @@
+\documentclass[a4paper]{article}
+
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{proof,tikz}
+\usepackage{amssymb,amsthm,stmaryrd}
+
+
+\usepackage[edges]{forest}
+\usetikzlibrary{automata, positioning, arrows}
+
+
+\newtheorem{Lemma}{Lema}
+\newtheorem{Theorem}{Teorema}
+\theoremstyle{definition}
+\newtheorem{Example}{Exemplo}
+\newtheorem{Definition}{Definição}
+
+
+\usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \lhead{Teoria da Computação}
+  \rhead{Aula 9}
+  \lfoot{Prof. Rodrigo Ribeiro}
+  \rfoot{\thepage}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \pagestyle{fancy}
+
+\tikzset{
+        ->,  % makes the edges directed
+        >=stealth', % makes the arrow heads bold
+        node distance=3cm,
+        every state/.style={thick, fill=gray!10},
+        initial text=$\,$
+        }
+  
+
+\begin{document}
+
+  \title{Aula 10 - Autômatos de pilha}
+  \author{Rodrigo Ribeiro}
+
+  \maketitle
+
+
+  \pagestyle{fancy}
+
+
+  \section*{Objetivos}
+
+  \begin{itemize}
+     \item Apresentar os conceitos de autômatos de pilha determinísticos e
+       transições compatíveis.
+     \item Apresentar o conceito de linguagem aceita por um autômato de pilha.
+     \item Exemplos de autômatos de pilha determinísticos.
+  \end{itemize}
+
+  \section{Introdução}
+
+  Conforme apresentado em aulas passadas, linguagens regulares não são capazes
+  de representar a estrutura de linguagens muito simples, como por exemplo,
+  $\{0^n1^n\,|\,n\geq 0\}$. Isso se deve ao fato de que AF não possuem
+  ``memória'' suficiente para armazenar o fato de que uma quantidade arbitrária
+  de 0's foi processada e usar esse fato para verificar se a quantidade de 1's é
+  a mesma. Como resolver esse problema?
+
+  Bem, a solução óbvia é ``adicionar mais memória''. Os autômatos de pilha (AP )são,
+  informalmente, autômatos finitos com uma pilha ilimitada. Uma transição em
+  um AP possui o seguinte formato geral:
+  \begin{figure}[H]
+    \begin{tikzpicture}[node distance=3cm]
+      \node[state](s0){$A$};
+      \node[state, right of=s0](s1){$B$};
+      \draw (s0)edge[above]node{$a,b/z$}(s1);
+    \end{tikzpicture}
+    \centering
+  \end{figure}
+  que pode ser formalmente descrito como $\delta(A,a,b) = [B,z]$. Informalmente,
+  a transição sai do estado $A$ processando $a$ na palavra de entrada, com $b$
+  no topo da pilha, resulta no estado $B$ e empilha $z$ após desempilhar $b$.
+  A seguir apresentamos um exemplo concreto de AP e como a execução deste
+  procede.
+
+  \begin{Example}
+    Considere o seguinte diagrama de estados para um AP que aceita
+    $\{0^n1^n\,|\,n\geq 0\}$.
+    \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state, initial, accepting](s0){$A$} ;
+        \node[state, accepting, right of=s0](s1){$B$};
+        \draw (s0) edge[loop above]node{$0,\,\lambda/X$}(s0)
+              (s0) edge[above]node{$1,\,X/\lambda$}(s1)
+              (s1) edge[loop above]node{$1,\,X/\lambda$}(s1);
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    Para exemplificar o funcionamento deste AP, vamos utilizar a noção de
+    configuração instântanea, que consiste de uma tripla formada por um estado,
+    a palavra atual e o estado da pilha. Representaremos a pilha como uma
+    palavra sobre um alfabeto $\Gamma$ de pilha. Em nosso exemplo, o alfabeto de
+    pilha é $\Gamma=\{X\}$ e a pilha vazia é representada por $\lambda$.
+
+    De maneira intuitiva, dizemos que uma palavra $w \in \Sigma^*$ pertence a
+    linguagem de um AP $M$ se esta iniciando seu processamento no estado inicial
+    o termina com pilha vazia em estado final tendo sido completamente
+    consumida. Apresentaremos alguns exemplos de transições nesse AP usando
+    configurações instântaneas. Primeiramente, vamos mostrar o processamento de
+    uma palavra aceita $0011$:
+    \[
+      \begin{array}{lcl}
+        \lbrack A,0011,\lambda \rbrack & \vdash & \{\delta(A,0,\lambda) =
+                                                  \lbrack A, X \rbrack\} \\
+        \lbrack A,011, X \rbrack & \vdash & \{\delta(A,0,\lambda) =
+                                            \lbrack A, X \rbrack\} \\
+        \lbrack A,11, XX \rbrack & \vdash & \{\delta(A,1,X) =
+                                            \lbrack B, \lambda \rbrack\} \\
+        \lbrack B,1,X \rbrack & \vdash & \{\delta(B,1,X) = \lbrack B, \lambda
+                                         \rbrack \} \\
+        \lbrack B, \lambda, \lambda \rbrack
+      \end{array}
+    \]
+    Logo, como $[A,0011,\lambda]\vdash^*[B,\lambda,\lambda]$, temos que $0011$ é
+    aceita por esse AP.
+
+    Agora, vamos considerar dois exemplos de palavras recusadas pelo AP
+    apresentado. Primeiro, vamos considerar a palavra $001$. O processamento
+    desta é apresentado a seguir.
+    \[
+      \begin{array}{lcl}
+        \lbrack A,001,\lambda \rbrack & \vdash & \{\delta(A,0,\lambda) =
+                                                  \lbrack A, X \rbrack\} \\
+        \lbrack A,01, X \rbrack & \vdash & \{\delta(A,0,\lambda) =
+                                            \lbrack A, X \rbrack\} \\
+        \lbrack A,1, XX \rbrack & \vdash & \{\delta(A,1,X) =
+                                            \lbrack B, \lambda \rbrack\} \\
+        \lbrack B,\lambda,X \rbrack 
+      \end{array}
+    \]
+    Neste caso, a palavra não é aceita por ter seu processamento finalizado com
+    a pilha não vazia. Outro exemplo de não aceitação acontece quando a palavra
+    de entrada não é completamente processada pelo AP. A palavra $011$ é um
+    exemplo deste caso. Sua execução é apresentada abaixo.
+    \[
+      \begin{array}{lcl}
+        \lbrack A,011,\lambda \rbrack & \vdash & \{\delta(A,0,\lambda) =
+                                                  \lbrack A, X \rbrack\} \\
+        \lbrack A,11, X \rbrack & \vdash & \{\delta(A,1,X) =
+                                            \lbrack B, \lambda \rbrack\} \\
+        \lbrack B,1,\lambda \rbrack 
+      \end{array}
+    \]
+  \end{Example}
+
+  \section{Autômatos de pilha determinísticos}
+
+  \begin{Definition}[Transições compatíveis]
+    Seja $\delta : E \times (\Sigma \cup \{\lambda\}) \times (\Gamma \cup
+    \{\lambda\}) \to E \times \Gamma^*$. Duas transições $\delta(e,a,b)$ e
+    $\delta(e',a',b')$ são compatíveis se, e somente se:
+    \[
+      (a = a' \lor a = \lambda \lor a' = \lambda) \land (b = b' \lor b = \lambda \lor b' = \lambda)
+    \]
+  \end{Definition}
+
+
+  \begin{Example}
+    Vamos considerar novamente o APD para $\{0^n1^n\,|\,n \geq 0\}$:
+    \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state, initial, accepting](s0){$A$} ;
+        \node[state, accepting, right of=s0](s1){$B$};
+        \draw (s0) edge[loop above]node{$0,\,\lambda/X$}(s0)
+              (s0) edge[above]node{$1,\,X/\lambda$}(s1)
+              (s1) edge[loop above]node{$1,\,X/\lambda$}(s1);
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    Somente o estado $A$ possui duas transições e, portanto, tem a possibilidade
+    de possuir transições compatíveis. Porém, as transições $\delta(A,0,\lambda)
+    = [A,X]$ e $\delta(A,1,X) = [B,\lambda]$ não são compatíveis, visto que
+    operam sobre diferentes símbolos do alfabeto de entrada.
+
+    Como um exemplo de AP possuindo transições compatíveis considere:
+    \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state, initial, accepting](s0){$A$} ; 
+        \node[state, accepting, right of=s0](s1){$B$} ; 
+        \draw (s0) edge[loop above]node{$\begin{array}{l}0,\lambda/Z\\1,\lambda/U\end{array}$}(s0)
+              (s0) edge[above] node{$\begin{array}{l}0,\lambda/\lambda\\1,\lambda/\lambda\\\lambda,\lambda/\lambda\end{array}$}(s1)
+              (s1) edge[loop above]node{$\begin{array}{l}0,Z/\lambda\\1,U/\lambda\end{array}$}(s1) ;
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    Observe que as transições $\delta(A,0,\lambda) = [B,\lambda]$ e
+    $\delta(A,\lambda,\lambda) = [B,\lambda]$ são compatíveis, como pode ser
+    facilmente verificado.
+  \end{Example}
+
+  \begin{Definition}[Autômato de pilha determinístico]
+    Um autômato de pilha determinístico (APD) é uma sêxtupla
+    $M=(E,\Sigma,\Gamma,\delta,i,F)$ em que:
+    \begin{itemize}
+       \item $E$: conjunto de estados.
+       \item $\Sigma$: alfabeto de entrada.
+       \item $\Gamma$: alfabeto de pilha.
+       \item $\delta : E \times (\Sigma \cup \{\lambda\}) \times (\Gamma \cup
+    \{\lambda\}) \to E \times \Gamma^*$: função de transição. Uma função parcial
+    sem transições compatíveis.
+       \item $i \in E$: estado inicial.
+       \item $F\subseteq E$: conjunto de estados finais.
+    \end{itemize}
+  \end{Definition}
+
+  \begin{Example}
+    Vamos considerar novamente o APD para $\{0^n1^n\,|\,n \geq 0\}$:
+    \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state, initial, accepting](s0){$A$} ;
+        \node[state, accepting, right of=s0](s1){$B$};
+        \draw (s0) edge[loop above]node{$0,\,\lambda/X$}(s0)
+              (s0) edge[above]node{$1,\,X/\lambda$}(s1)
+              (s1) edge[loop above]node{$1,\,X/\lambda$}(s1);
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    Como discutido em um exemplo anterior, este AP não possui transições
+    compatíveis e, portanto, é determinístico.
+  \end{Example}
+  
+\end{document}

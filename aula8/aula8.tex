@@ -1,0 +1,305 @@
+\documentclass[a4paper]{article}
+
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{proof,tikz}
+\usepackage{amssymb,amsthm,stmaryrd}
+
+
+\usepackage[edges]{forest}
+\usetikzlibrary{automata, positioning, arrows}
+
+
+\newtheorem{Lemma}{Lema}
+\newtheorem{Theorem}{Teorema}
+\theoremstyle{definition}
+\newtheorem{Example}{Exemplo}
+\newtheorem{Definition}{Definição}
+
+
+\usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \lhead{Teoria da Computação}
+  \rhead{Aula 8}
+  \lfoot{Prof. Rodrigo Ribeiro}
+  \rfoot{\thepage}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \pagestyle{fancy}
+
+\tikzset{
+        ->,  % makes the edges directed
+        >=stealth', % makes the arrow heads bold
+        node distance=2cm,
+        every state/.style={thick, fill=gray!10},
+        initial text=$\,$
+        }
+  
+
+\begin{document}
+
+  \title{Aula 8 - Expressões regulares}
+  \author{Rodrigo Ribeiro}
+
+  \maketitle
+
+
+  \pagestyle{fancy}
+
+
+  \section*{Objetivos}
+
+  \begin{itemize}
+     \item Apresentar expressões regulares, sua sintaxe e semântica.
+     \item Apresentar a equivalência entre expressões regulares e
+           autômatos finitos.
+  \end{itemize}
+
+  \section{Expressões regulares}
+
+  \begin{Definition}[Sintaxe e semântica de expressões regulares]
+    O conjunto de expressões regulares (ERs) sobre um alfabeto $\Sigma$ é
+    definido recursivamente como:
+    \begin{itemize}
+       \item $\emptyset$ denota a linguagem regular $\emptyset$.
+       \item $\lambda$ denota a linguagem regular $\{\lambda\}$.
+       \item $a$, $a\in\Sigma$, denota a linguagem regular $\{a\}$.
+       \item $e_1 + e_2$ denota a linguagem regular $L(e_1) \cup L(e_2)$.
+       \item $e_1\,e_2$ denota a linguagem regular $L(e_1) \:L(e_2)$.
+       \item $e^*$ denota a linguaegm regular $L(e)^*$.
+    \end{itemize}
+  \end{Definition}
+
+  \begin{Example}
+    Abaixo apresentamos alguns exemplos de expressões regulares e os respectivos
+    conjunto que elas denotam.
+    \begin{itemize}
+       \item $\emptyset$ denota a linguagem $\emptyset$.
+       \item $01$ denota a linguagem $\{0\}\{1\} = \{01\}$.
+       \item $(0 + 1)1$ denota a linguagem $(\{0\} \cup \{1\})\{1\} =
+         \{0,1\}\{1\} = \{01,11\}$.
+       \item $0^*$ denota a linguagem $\{0\}^*$.
+    \end{itemize}
+  \end{Example}
+
+  \section{Equivalência de ERs e AFs}
+
+  \subsection{Construindo um AF a partir de uma ER}
+  
+  \begin{Theorem}\label{teorema1}
+    Toda expressão regular denota uma linguagem regular.
+  \end{Theorem}
+  \begin{proof}
+    Suponha $e$ uma expressão regular arbitrária. Para mostrar que $e$ denota
+    uma linguagem regular, devemos mostrar como construir, a partir de $e$ um
+    AF. Para isso, vamos proceder por indução sobre a estrutura de $e$.
+    \begin{itemize}
+      \item Caso $e = \emptyset$. O AF correspondente a $e = \emptyset$ é:
+        \begin{figure}[H]
+          \begin{tikzpicture}
+            \node[state, initial](s0){$A$};
+          \end{tikzpicture}
+          \centering
+        \end{figure}
+      \item Caso $e = \lambda$. O AF correspondente a $e = \lambda$ é:
+        \begin{figure}[H]
+          \begin{tikzpicture}
+            \node[state, initial, accepting](s0){$A$};
+          \end{tikzpicture}
+          \centering
+        \end{figure}
+      \item Caso $e = a$, $a\in\Sigma$. O AF correspondente é:
+        \begin{figure}[H]
+          \begin{tikzpicture}
+            \node[state,initial](s0){$A$} ;
+            \node[state,accepting, right of=s0](s1){$B$} ;
+            \draw (s0) edge[above] node{$a$}(s1);
+          \end{tikzpicture}
+          \centering
+        \end{figure}
+      \item Caso $e = e_1 + e_2$. Pela hipótese de indução, temos que $M_1$ é o
+        AF correspondente a $e_1$ e de maneira similar $M_2$ é o AF para $e_2$.
+        O AF para $e$ é obtido pela construção de produto para união.
+      \item Caso $e = e_1\,e_2$. Pela hipótese de indução, temos que $M_1$ é o
+        AF correspondente a $e_1$ e de maneira similar $M_2$ é o AF para $e_2$.
+        O AF para $e$ é obtido pela propriedade de fechamento para concatenação.
+      \item Caso $e = e_1^*$. Pela hipótese de indução, temos que $M_1$ é o
+        AF correspondente a $e_1$.
+        O AF para $e$ é obtido pela propriedade de fechamento para o fecho de Kleene.
+    \end{itemize}
+  \end{proof}
+
+  \subsection{Construindo uma ER a partir de um AF}
+
+  Antes de se apresentar a construção de uma ER a partir de um AF, faz-se
+  necessária a seguinte definição.
+
+  \begin{Definition}
+    Um diagrama ER sobre $\Sigma$ é um diagrama de estados em que as arestas são
+    rotuladas com ER ao invés de símbolos de $\Sigma$.
+  \end{Definition}
+
+  \begin{Definition}[Eliminando estados de um diagrama ER]
+    Pode-se eliminar estados de diagramas ER preservando a linguagem aceita por
+    esses usando os seguintes esquemas.
+    \begin{figure}[H]
+      \begin{minipage}{.45\textwidth}
+        \begin{tikzpicture}
+          \node[state](s0){$0$} ;
+          \node[state, right of=s0](s1) {$1$} ;
+          \node[state, right of=s1](s2) {$2$} ;
+          \draw (s0) edge[above] node{$e_1$} (s1)
+                (s1) edge[loop above] node{$e_2$} (s1)
+                (s1) edge[above] node{$e_3$} (s2) ;
+        \end{tikzpicture}
+      \end{minipage}
+      \hfill
+      \begin{minipage}{.45\textwidth}
+        \begin{tikzpicture}
+          \node[state](s0){$0$} ;
+          \node[state, right of=s1](s2) {$2$} ;
+          \draw (s0) edge[above] node{$e_1e_2^*e_3$} (s2) ;
+        \end{tikzpicture}        
+      \end{minipage}
+      \centering
+      \caption{Esquema de eliminação de estados.}
+    \end{figure}
+
+    Outro esquema de eliminação de estados é apreseentado a seguir.
+
+    \begin{figure}[H]
+      \begin{minipage}{.45\textwidth}
+        \begin{tikzpicture}[node distance=3cm]
+          \node[state](s0){$0$} ;
+          \node[state, right of=s0](s1) {$1$} ;
+          \draw (s0) edge[bend left, above] node{$e_1$} (s1)
+                (s1) edge[loop above] node{$e_2$} (s1)
+                (s1) edge[bend left, below]node{$e_3$}(s0);
+        \end{tikzpicture}
+      \end{minipage}
+      \hfill
+      \begin{minipage}{.45\textwidth}
+        \begin{tikzpicture}
+          \node[state](s0){$0$} ;
+          \draw (s0) edge[loop above] node{$e_1e_2^*e_3$} (s0) ;
+        \end{tikzpicture}        
+      \end{minipage}
+      \centering
+      \caption{Esquema de eliminação de estados.}
+    \end{figure}    
+  \end{Definition}
+
+  \begin{Definition}[Diagramas ER básicos]
+    Dizemos que um diagrama ER é básico se este é formado apenas por um estado
+    inicial e final. A partir de um diagrama ER básico é imediato obter a ER
+    que o denota. Abaixo apresentamos os dois possíveis casos.
+    \begin{figure}[H]
+        \begin{tikzpicture}[node distance=3cm]
+          \node[state, initial, accepting](s0){$0$} ;
+          \draw (s0) edge[loop above] node{$e$} (s0) ;
+        \end{tikzpicture}
+        \centering
+        \caption{Diagrama ER para $e^*$.}
+      \end{figure}
+      \begin{figure}[H]
+        \begin{tikzpicture}
+          \node[state, initial](s0){$0$} ;
+          \node[state, accepting, right of=s0](s1){$1$} ; 
+          \draw (s0) edge[loop above] node{$e_1$} (s0)
+                (s0) edge[bend left, above] node{$e_2$} (s1)
+                (s1) edge[loop above] node{$e_3$}(s1)
+                (s1) edge[bend left, below]node{$e_4$}(s0);
+         \end{tikzpicture}    
+      \centering
+      \caption{Diagrama ER para $e_1^*e_2(e_3 + e_4e_1^*e_2)^*$.}
+    \end{figure} 
+  \end{Definition}
+
+  \begin{Theorem}[Construção de ER a partir de AFs]\label{teorema2}
+    Toda linguagem regular é denotada por uma expressão regular.
+  \end{Theorem}
+  \begin{proof}
+    Suponha $M = (E,\Sigma,\delta,i,\{f_1,...,f_k\})$ um AF para uma linguagem
+    regular $L$. Pela definição de aceitação de um AF, temos que
+    $L = L_1 \cup ... \cup L_k$, em que
+    \[
+      L_j = \{w \in \Sigma^*\,|\,\widehat{\delta}(i,w) = f_j\}
+    \]
+    isto é, cada $L_j$ denota a sub-linguagem cujas palavras
+    terminam seu processamento em $f_j$. Dessa forma, podemos encontrar a
+    ER correspondente a cada $f_j$ eliminando todos os estados, exceto $i$ e
+    $f_j$. Após essa eliminação de estados, pode-se ober uma ER $e_j$ usando
+    os diagramas ER básicos. De posse das ER para cada um dos estados $f_j$,
+    basta combiná-las para formar a ER do AF como um todo. A ER correspondente a
+    $M$ é $e = e_1 + ... + e_k$.
+  \end{proof}
+
+  \begin{Example}
+    Para exemplificar a construção de uma ER a partir de um AF, considere o seguinte AF:
+    \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state,initial](s0){$0$};
+        \node[state, accepting, right of=s0](s1){$1$};
+        \node[state, below of=s0](s2){$2$} ;
+        \node[state, right of=s2](s3){$3$} ;
+        \draw (s0)edge[bend left, right]node{$a$}(s2)
+              (s1)edge[bend left, right]node{$a$}(s3)
+              (s3)edge[bend left, left]node{$a$}(s1)        
+              (s0)edge[above]node{$b$}(s1)
+              (s2)edge[above]node{$b$}(s3)
+              (s2)edge[bend left, left]node{$a$}(s0) ;
+       
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    Removendo o estado 2, temos o seguinte diagrama ER.
+     \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state,initial](s0){$0$};
+        \node[state, accepting, right of=s0](s1){$1$};
+        \node[state, right of=s2](s3){$3$} ;
+        \draw (s0)edge[loop above]node{$aa$}(s0)
+              (s0)edge[left]node{$ab$}(s3)
+              (s1)edge[bend left, right]node{$a$}(s3)
+              (s3)edge[bend left, left]node{$a$}(s1)        
+              (s0)edge[above]node{$b$}(s1) ;       
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    Eliminando o estado 3 obtemos:
+     \begin{figure}[H]
+      \begin{tikzpicture}[node distance=3cm]
+        \node[state,initial](s0){$0$};
+        \node[state, accepting, right of=s0](s1){$1$};
+        \draw (s0)edge[loop above]node{$aa$}(s0)
+              (s1)edge[loop above]node{$aa$}(s1)
+              (s0)edge[above]node{$b + aba$}(s1) ;       
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+   A partir deste diagrama ER básico, obtemos a ER correspondente ao AF
+   original: $(aa)^*(b + aba)(aa)^*$.
+  \end{Example}
+  
+  \section{Exercícios}
+
+  \begin{enumerate}
+     \item Para cada linguagem abaixo, apresente um AFD para a mesma. A partir
+       do AFD apresentado, construa a ER usando a técnica do
+       Teorema~\ref{teorema2}.
+       \begin{enumerate}
+         \item Palavras que começam e terminam com 1.
+         \item Palavras que começam e terminam com 1 e tem pelo menos um 0.
+         \end{enumerate}
+      \item Utilizando a construção do Teorema \ref{teorema1}, apresente AFs
+        para as seguintes ERs.
+        \begin{enumerate}
+          \item $(ab)^*ac$
+          \item $(ab)^*(ba)^*$
+          \item $((aa + bb)^*cc)*$
+        \end{enumerate}
+   \end{enumerate}
+\end{document}

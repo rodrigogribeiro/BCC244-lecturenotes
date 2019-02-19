@@ -1,0 +1,197 @@
+\documentclass[a4paper]{article}
+
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{proof,tikz}
+\usepackage{amssymb,amsthm,stmaryrd}
+
+
+\usepackage[edges]{forest}
+\usetikzlibrary{automata, positioning, arrows}
+
+
+\newtheorem{Lemma}{Lema}
+\newtheorem{Theorem}{Teorema}
+\theoremstyle{definition}
+\newtheorem{Example}{Exemplo}
+\newtheorem{Definition}{Definição}
+
+
+\usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \lhead{Teoria da Computação}
+  \rhead{Aula 6}
+  \lfoot{Prof. Rodrigo Ribeiro}
+  \rfoot{\thepage}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \pagestyle{fancy}
+
+\tikzset{
+        ->,  % makes the edges directed
+        >=stealth', % makes the arrow heads bold
+        node distance=2cm,
+        every state/.style={thick, fill=gray!10},
+        initial text=$\,$
+        }
+  
+
+\begin{document}
+
+  \title{Aula 6 - Linguagens regulares e o lema do bombeamento}
+  \author{Rodrigo Ribeiro}
+
+  \maketitle
+
+
+  \pagestyle{fancy}
+
+
+  \section*{Objetivos}
+
+  \begin{itemize}
+     \item Apresentar o conceito de linguagem regular.
+     \item Apresentar o lema do bombeamento e como esse
+       pode ser utilizado para provar que uma
+      linguagem não é regular. 
+  \end{itemize}
+
+  \section{Linguagens Regulares}
+
+  \begin{Definition}[Linguagem regular (LR)]\label{regular}
+    Dizemos que uma linguagem $L \subseteq \Sigma^*$ é regular se
+    existe um autômato finito determinístico que a reconhece.
+  \end{Definition}
+
+  Note que como um AFN$\lambda$ é equivalente a um AFN e estes são
+  equivalentes a AFDs, é suficiente existir um autômato finito
+  determinístico ou não.
+
+  \section{O lema do bombeamento}
+
+  O lema do bombeamento é uma importante caracterísitca possuída por
+  toda linguagem regular (e algumas não regulares). Antes de apresentar
+  o enunciado, demonstração e exemplos de uso do lema, é conveniente
+  apresentar uma explicação informal.
+
+  \subsection{Uma introdução informal}
+
+  Para nossa introdução informal, vamos considerar um AFD para uma linguagem
+  simples, mas que permitirá analisarmos o conteúdo do lema do bombeamento
+  em um contexto concreto. A linguagem que consideraremos é $\{0\}\{0,1\}^*\{0\}$.
+  O AFN para essa linguagem é apresentado a seguir.
+
+  \begin{figure}[H]
+    \begin{tikzpicture}
+      \node[state,initial](s0){$A$} ;
+      \node[state, right of=s0](s1){$B$};
+      \node[state, accepting, right of=s1](s2){$C$};
+      \draw (s0) edge[above] node{$0$} (s1)
+            (s1) edge[loop above] node{$0,1$}(s1)
+            (s1) edge[above] node{$0$}(s2) ;
+    \end{tikzpicture}
+    \centering
+  \end{figure}
+
+  Pelo diagrama acima, é fácil ver que as seguintes palavras pertencem a essa
+  linguagem: $00, 000, 010, 0000, 0010,0100,...$. Como esse AF possui 3 estados,
+  qualquer palavra w tal que $|w| \geq 3$ deve passar pelo ciclo no estado $B$
+  pelo menos uma vez. Dessa forma, podemos ``aumentar'' o tamanho de palavras
+  aceitas por esse AF simplesmente percorrendo o ciclo. Dessa forma, 
+  qualquer $z$, $|z| \geq 3$, deve ser da forma $0\{0,1\}^k0$, $k\geq 1$,
+  em que o primeiro $0$ é processado pela transição de $A$ para $B$,
+  a subpalavra $\{0,1\}^k$ é processada por $k$ iterações do ciclo
+  sobre o estado $B$ e, finalmente, o último $0$ é processado pela
+  transição de $B$ para $C$. Note que $|0\{0,1\}^k0| = k + 2$.
+  Podemos reconhecer palavras de tamanho maior (por exemplo, $k + 10$)
+  simplesmente percorrendo mais vezes o ciclo sobre o estado $B$. Ou seja,
+  a existência de um ciclo em um AF é uma condição para que a linguagem
+  aceita por ele seja infinita.
+
+  A estrutura apresentada para a linguagem acima é, na verdade, compartilhada
+  por todas as linguagens regulares. Na próxima subseção será apresentado e
+  demonstrado o lema do bombeamento que consiste de uma versão ``geral''
+  do raciocínio acima descrito.
+
+  \subsection{Enunciando o lema}
+
+  \begin{Lemma}[Lema do bombeamento para linguagens regulares]
+    Seja $L$ uma linguagem regular. Então, existe uma constrante $k > 0$,
+    dependente de $L$, tal que para qualquer palavra $z \in L$, $|z| \geq k$,
+    existem $u,v$ e $w \in \Sigma^*$ que satisfazem as seguintes condições:
+    \begin{itemize}
+      \item $z = uvw$
+      \item $|uv| \leq k$
+      \item $v \neq \lambda$
+      \item $\forall i. i \in \mathbb{N} \to uv^iw \in L$
+    \end{itemize}
+  \end{Lemma}
+  \begin{proof}
+    Suponha $L$ uma linguagem regular. Logo, existe um AFD $M$ tal que $L(M) =
+    L$. Seja $k = |E|$. Suponha $z \in L$ arbitrário e que $|z| \geq  k$.
+    Seja $c(z)$ o caminho percorrido em $M$ para aceitar $z$. Evidentemente,
+    $|c(z)| = |z| + 1$ e, uma vez que $|z| \geq k$, temos, pelo princípio
+    da casa dos pombos que existe pelo menos um estado $e \in E$ que repete em
+    $c(z)$. Seja $u$ a palavra formada pelas transições antes da primeira
+    ocorrência de $e$ em $c(z)$, $v$ a palavra formada pelas transições entre duas
+    ocorrências de $c(z)$ e $w$ a palavra formada pelas transições a partir
+    da segunda ocorrência de $e$. Pelo argumento apresentado, temos que
+    $z = uvw$. Como o subcaminho que processa $v$ possui duas ocorrências de
+    um estado $e$, temos que $|uv| \leq k$. Finalmente, como $v$ é processado
+    por um ciclo, podemos percorrê-lo um número arbitrário e ainda produzir
+    palavras pertencentes a $L(M)$.
+  \end{proof}
+
+  A principal aplicação do lema do bombeamento é demonstrar que uma certa
+  linguagem não é regular. Essa demonstração é feita por contradição.
+  Supomos que a linguagem em questão é regular, supomos a existência
+  da constante do lema, $k$, e escolhemos uma palavra $z \in L$ tal que
+  $|z| > k$. Em seguida, supomos que $z = uvw$, $|uv| \leq k$ e
+  $v \neq \lambda$. A contradição do lema é feita encontrando um valor $i \geq
+  0$ tal que $uv^iw \not\in L$, o que invalida a última fórmula do lema.
+ 
+  \subsection{Exemplos}
+
+  \begin{Example}
+    Suponha que $L = \{0^n1^n\,|\,n\geq 0\}$ seja uma LR. Seja $k$ a constante
+    referida no LB e $z = 0^k1^k \in L$. Como $|z| > k$, pelo LB as seguintes
+    condições se verificam: $z = uvw$, $|uv| \leq k$, $v \neq \lambda$ e
+    $uv^iw \in L$, para todo $i \geq 0$. Como $z = uvw = 0^k1^k$ e $|uv| \leq k$,
+    temos que $uv$ é formado apenas por 0's. Além disso, como $v \neq \lambda$,
+    $v$ deve possuir pelo menos um 0. Seja $i = 0$. Temos que $uv^0w$ = $0^{k -
+      |v|}1^k$. Porém, como $v \neq \lambda$, $|v| > 0$ e, portanto,
+    $0^{k -|v|}1^k$ possuirá mais 1's do que 0's. Portanto, $uv^0w \not\in L$, 
+    o que contraria o LB. Portanto, $L = \{0^n1^n\,|\,n\geq 0\}$ não é uma LR.
+  \end{Example}
+
+
+  \begin{Example}
+    Suponha que $L = \{0^n1^m\,|\,n > m\}$ seja uma LR. Seja $k$ a constante
+    referida no LB e $z = 0^{k + 1}1^k \in L$. Como $|z| > k$, pelo LB as seguintes
+    condições se verificam: $z = uvw$, $|uv| \leq k$, $v \neq \lambda$ e
+    $uv^iw \in L$, para todo $i \geq 0$. Como $z = uvw = 0^{k+1}1^k$ e $|uv| \leq k$,
+    temos que $uv$ é formado apenas por 0's. Além disso, como $v \neq \lambda$,
+    $v$ deve possuir pelo menos um 0. Seja $i = 0$. Temos que $uv^0w$ = $0^{k -
+      |v|}1^k$. Porém, como $v \neq \lambda$, $|v| > 0$ e, portanto,
+    $0^{k -|v|}1^k$ possuirá uma quantidade de 1's maior ou igual a de 0's.
+     Portanto, $uv^0w \not\in L$, 
+     o que contraria o LB. Portanto, $L = \{0^n1^m\,|\,n > m\}$ não é uma LR.
+  \end{Example}
+  
+  
+  \section{Exercícios}
+
+  \begin{enumerate}
+    \item Prove que cada uma das linguagens a seguir não é regular usando o LB.
+      \begin{enumerate}
+        \item $\{0^m1^n\,|\,m < n\}$
+        \item $\{0^n1^{2n}\,|\,n\geq 0\}$
+        \item $\{ww\,|\,w\in\{0,1\}^*\}$
+        \item $\{0^{n^2}\,|\,n\geq 0\}$
+      \end{enumerate}
+  \end{enumerate}
+  
+\end{document}
