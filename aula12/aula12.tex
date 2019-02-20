@@ -1,0 +1,331 @@
+\documentclass[a4paper]{article}
+
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{proof,tikz}
+\usepackage{amssymb,amsthm,stmaryrd}
+
+
+\usepackage[edges]{forest}
+\usetikzlibrary{automata, positioning, arrows}
+
+
+\newtheorem{Lemma}{Lema}
+\newtheorem{Theorem}{Teorema}
+\theoremstyle{definition}
+\newtheorem{Example}{Exemplo}
+\newtheorem{Definition}{Definição}
+
+
+\usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \lhead{Teoria da Computação}
+  \rhead{Aula 12}
+  \lfoot{Prof. Rodrigo Ribeiro}
+  \rfoot{\thepage}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \pagestyle{fancy}
+
+\tikzset{
+        -,  % makes the edges directed
+        >=stealth', % makes the arrow heads bold
+        node distance=3cm,
+        every state/.style={thick, fill=gray!10},
+        initial text=$\,$
+        }
+  
+
+\begin{document}
+
+  \title{Aula 12 - Gramáticas livres de contexto}
+  \author{Rodrigo Ribeiro}
+
+  \maketitle
+
+
+  \pagestyle{fancy}
+
+
+  \section*{Objetivos}
+
+  \begin{itemize}
+     \item Apresentar os conceito de gramática livre de contexto.
+     \item Apresentar os conceitos de derivação, derivação mais à esquerda e
+       mais à direita.
+     \item Apresentar o conceito de árvore de derivação.
+     \item Apresentar o conceito de ambiguidade.
+     \item Definir linguagens livres de contexto.
+  \end{itemize}
+
+
+  \section{Gramáticas livres de contexto}
+
+  \begin{Definition}[Gramática livre de contexto]
+    Uma gramática é dita ser livre de contexto $G=(V,\Sigma,R,P)$ (GLC) se
+    toda regra possui a forma $X \to w \in R$, em que $X \in V$ e $w \in (V \cup
+    \Sigma)^*$.
+  \end{Definition}
+ 
+  \begin{Example}
+    Como um exemplo de GLC, considere a seguinte gramática que gera
+    $\{0^n1^n\,|\,n\geq 0\}$.
+    \[
+      P \to 0P1\,|\,\lambda
+    \]
+    Por exemplo, podemos mostrar que $P\Rightarrow^*0011$ usando a seguinte
+    derivação.
+    \[
+      \begin{array}{lcl}
+        P & \Rightarrow & \{P \to 0P1\}\\
+        0P1 & \Rightarrow & \{P \to 0P1\}\\
+        00P11 & \Rightarrow & \{P \to \lambda\}\\
+        0011
+       \end{array}
+    \]
+  \end{Example}
+
+  \begin{Example}
+    Outro exemplo de GLC é a para a linguagem de palíndromos sobre $\{0,1\}$.
+    \[
+      P \to 0P0\,|\,1P1\,|\,0\,|\,1\,|\,\lambda
+    \]
+    Note que as regras dessa gramática mostram a estrutura recursiva de
+    palíndromos. Como caso base, temos os palíndromos $\lambda, 0$ e $1$.
+    Palíndromos maiores são criados concatenando um 0 (1) à esquerda e a
+    direita de um palíndromo.
+  \end{Example}
+
+  \begin{Example}
+    Considere a linguagem sobre $\Sigma=\{0,1\}$ em que toda palavra
+    possui o mesmo número de 0s e de 1s.
+    \[
+      P \to 0P1P\,|\,1P0P\,|\,\lambda
+    \]
+    Novamente, temos que as regras dessa gramática exibem a mesma estrutura
+    de uma definição recursiva para essa linguagem. São 3 casos, a saber:
+    \begin{enumerate}
+      \item $\lambda$, que é a menor palavra com o mesmo número de 0s e de 1s.
+      \item A palavra começa com um 0: Se a palavra começa com um 0, este possui
+        um 1 correspondente em algum ponto da palavra. O mesmo vale para o caso
+        da palavra iniciar com 1.
+    \end{enumerate}
+  \end{Example}
+
+  \begin{Example}
+    A gramática a seguir descreve a estrutura de expressões aritméticas
+    encontradas em linguagens de programação.
+    \[
+      \begin{array}{l}
+        E \to E + T\,|\,T\\
+        T \to T * F\,|\, F \\
+        F \to (E) \,|\, n \\
+      \end{array}
+    \]
+    em que $n$ denota um número qualquer. Note que o alfabeto dessa gramática é
+    $\Sigma=\{(,),+,*,n\}$.
+  \end{Example}
+
+  \begin{Definition}[Linguagem livre de contexto]
+    Dizemos que uma linguagem $L\subseteq \Sigma^*$ é uma linguagem livre de
+    contexto (LLC) se existe uma gramática livre de contexto que a gera.
+  \end{Definition}
+  
+  \section{Derivações e ambiguidade}
+
+  \begin{Definition}[Forma sentencial]
+    Seja $G = (V,\Sigma,R,P)$ uma gramática. Uma forma sentencial para $G$ é uma
+    palavra $w \in (V\cup\Sigma)^*$.
+  \end{Definition}
+
+  \begin{Definition}[Árvore de derivação]
+    Seja $G = (V,\Sigma,R,P)$ uma GLC. Uma árvore de derivação (AD) de uma forma
+    sentencial de $G$ é uma árvore ordenada construída recursivamente como se
+    segue:
+    \begin{enumerate}
+      \item uma árvore cujo único vértice possui o rótulo $P$ é uma AD para $P$;
+      \item Se $X \in V$ é o rótulo de uma folha $f$ de uma AD A, então:
+        \begin{enumerate}
+           \item Se $X \to \lambda \in R$, então a árvore de derivação obtida
+             adicionando mais um vértice $v$ com rótulo $\lambda$ e uma aresta
+             $\{f,v\}$ é uma AD.
+           \item Se $X \to x_1...x_n$, $x_1...x_n\in V \cup \Sigma$, então a
+             árvore obtida adicionando a A $n$ vértices $v_1,...,v_n$ com os
+             rótulos $x_1,...,x_n$ e as arestas $\{f,v_1\},...,\{f,v_n\}$
+             é uma AD.
+        \end{enumerate}
+    \end{enumerate}
+  \end{Definition}
+
+  \begin{Example}
+    Para exemplificar o conceito de árvore de derivação, vamos considerar a
+    seguinte gramática para $\{0^n1^n\,|\,n\geq 0\}$.
+    \[
+      P \to 0P1\,|\,\lambda
+    \]
+    A árvore de derivação para $0011$ será:
+    \begin{figure}[H]
+      \begin{tikzpicture}[
+        tlabel/.style={pos=0.4,right=-1pt,font=\footnotesize\color{red!70!black}},
+      ]
+      \node{P}
+      child {node {0}}
+      child {node {P} 
+        child {node {0}}
+        child {node {P}
+               child{node{$\lambda$}}}
+        child {node {1}}}
+      child{node{1}};
+    \end{tikzpicture}      
+      \centering
+    \end{figure}
+  \end{Example}
+
+
+  \begin{Definition}[Gramática ambígua]
+    Dizemos que uma GLC $G$ é ambígua se esta possui mais de uma AD para alguma
+    sentença que ela gera.
+  \end{Definition}
+
+
+  \begin{Example}
+    Vamos considerar uma outra GLC para expressões aritméticas.
+    \[
+      \begin{array}{l}
+        E \to E + E\,|\,E * E\,|\,(E)\,|\,n\\
+      \end{array}
+    \]
+    A seguir, apresentamos duas árvores de derivação distintas para
+    $n + n + n$.
+    \begin{figure}[H]
+      \begin{minipage}{.45\textwidth}
+        \begin{tikzpicture}[
+          -,tlabel/.style={pos=0.4,right=-1pt,font=\footnotesize\color{red!70!black}},
+          ]
+          \node{E}
+          child{
+            node{E}
+            child{node{n}}
+           }
+           child{node{+}}
+           child{
+             node{E}
+             child{
+               node{E}
+               child{node{n}}
+             }
+             child{node{+}}
+             child{
+               node{E}
+               child{node{n}}
+             }
+           };
+        \end{tikzpicture}
+      \end{minipage} \hfill
+      \begin{minipage}{.45\textwidth}
+        \begin{tikzpicture}[
+          tlabel/.style={pos=0.4,right=-1pt,font=\footnotesize\color{red!70!black}},
+          ]
+          \node{E}
+          child{
+            node{E}
+            child{
+              node{E}
+              child{node{n}}
+            }
+            child{node{+}}
+            child{
+              node{E}
+              child{node{n}}
+            }
+          }
+          child{node{+}}
+          child{
+            node{E}
+            child{node{n}}
+          };
+        \end{tikzpicture}        
+      \end{minipage}
+    \end{figure}
+    Como a gramática acima gera duas distintas ADs para a mesma sentença, temos
+    que essa é ambígua.
+  \end{Example}
+
+  \begin{Definition}[Derivação mais a esquerda (DME) e Derivação mais a direita
+    (DMD)]
+    Uma derivação é dita mais a esquerda (mais a direita) se a cada passo é
+    expandida a variáveis mais a esquerda (mais a direita). Usa-se o símbolo
+    $\Rightarrow_E$ para representar uma DME e $\Rightarrow_D$ para uma DMD.
+
+    Podemos dizer que uma gramática é ambígua se existem duas ou mais DMEs ou
+    DMDs para uma mesma sentença.
+  \end{Definition}
+
+  \begin{Example}
+    Vamos considerar novamente a seguinte GLC para expressões aritméticas
+    \[
+      \begin{array}{l}
+        E \to E + E\,|\,E * E\,|\,(E)\,|\,n\\
+      \end{array}
+    \]
+    e a seguinte palavra: $n + n + n$. Apresentaremos duas derivações mais a
+    direita para essa palavra.
+
+    A primeira derivação é:
+    \[
+      \begin{array}{lcl}
+        E & \Rightarrow_D & \{E \to E + E\}\\
+        E + E & \Rightarrow_D & \{E \to E + E\}\\
+        E + E + E & \Rightarrow_D & \{E \to n\}\\
+        E + E + n & \Rightarrow_D & \{E \to n\}\\
+        E + n + n & \Rightarrow_D & \{E \to n\}\\
+        n + n + n
+      \end{array}
+    \]
+
+    A segunda é:
+
+    \[
+      \begin{array}{lcl}
+        E & \Rightarrow_D & \{E \to E + E\} \\
+        E + E & \Rightarrow_D & \{E \to n\} \\
+        E + n & \Rightarrow_D & \{E \to E + E\}\\
+        E + E + n & \Rightarrow_D & \{E \to n\} \\
+        E + n + n & \Rightarrow_D & \{E \to n\} \\
+        n + n + n
+      \end{array}
+    \]
+    O que também mostra que a gramática acima é ambígua.
+  \end{Example}
+
+  \begin{Definition}[Linguagem inerentemente ambígua]
+    Dizemos que uma linguagem é inerentemente ambígua se existem apenas
+    gramáticas livres de contexto ambíguas para ela.
+  \end{Definition}
+
+  \begin{Example}
+    A seguinte linguagem é inerentemente ambígua:
+    \[
+      \{a^nb^mc^k\,|\,n = m \lor n = k\}
+    \]
+    Palavras do formato $a^nb^nc^n$, $n \geq 0$, possuem mais de uma AD.
+  \end{Example}
+  
+  \section{Exercícios} 
+
+  \begin{enumerate}
+     \item Construa GLCs para as seguintes linguagens.
+       \begin{enumerate}
+       \item $\{0^n1^n\,|\,n\geq 0\} \cup \{0^n1^{2n}\,|\,n\geq 0\}$
+       \item $\{0^n1^n0^k\,|\,n,k \geq 0\}$
+       \item $\{0^n1^m\,|\,m > n\}$
+       \item $\{a^nb^mc^k\,|\,n = m \lor n = k\}$
+       \end{enumerate}
+     \item Considerando a gramática que você construiu para $\{a^nb^mc^k\,|\,n =
+       m \lor n = k\}$, apresente duas AD e derivações mais a esquerda e a
+       direita para a palavra $a^2b^2c^2$ mostrando que sua gramática é ambígua.
+  \end{enumerate}
+\end{document}
