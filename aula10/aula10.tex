@@ -24,7 +24,7 @@
   \pagestyle{fancy}
   \fancyhf{}
   \lhead{Teoria da Computação}
-  \rhead{Aula 9}
+  \rhead{Aula 10}
   \lfoot{Prof. Rodrigo Ribeiro}
   \rfoot{\thepage}
   \renewcommand{\footrulewidth}{0.4pt}
@@ -215,7 +215,7 @@
     \end{itemize}
   \end{Definition}
 
-  \begin{Example}
+   \begin{Example}
     Vamos considerar novamente o APD para $\{0^n1^n\,|\,n \geq 0\}$:
     \begin{figure}[H]
       \begin{tikzpicture}
@@ -230,5 +230,57 @@
     Como discutido em um exemplo anterior, este AP não possui transições
     compatíveis e, portanto, é determinístico.
   \end{Example}
+ 
   
+  \begin{Definition}[Transição entre configurações instântaneas]
+    Seja $M=(E,\Sigma,\Gamma,\delta,i,F)$ um APD. A relação $\vdash(E \times
+    \Sigma^* \times \Gamma^*)^2$ para $M$ é tal que para todo $e\in E$,
+    $a\in \Sigma\cup\{\lambda\}$, $b\in \Gamma\cup\{\lambda\}$ e $x \in
+    \Gamma^*$:
+    \[
+      \lbrack e, ay, bz \rbrack \vdash \lbrack e', y, xz \rbrack
+    \]
+    sempre que $\delta(e,a,b) = [e',x]$. Como usual, $\vdash^*$ irá denotar
+    o fecho transitivo e reflexivo de $\vdash$.
+  \end{Definition}
+
+  \begin{Definition}[Linguagem aceita por um AP]
+    Seja $M=(E,\Sigma,\Gamma,\delta,i,F)$ um APD. A linguagem aceita por $M$,
+    $L(M)$, é definida como:
+    \[
+      L(M) = \{w\in\Sigma^*\,|\,\exists e. e \in F \land [i,w,\lambda]\vdash^*[e,\lambda,\lambda]\}
+    \]
+  \end{Definition}
+
+  \begin{Example}
+    Considere a linguagem de palavras sobre $\Sigma=\{0,1\}$ que possuem o mesmo
+    número de 0s e de 1s. O APD para essa linguagem é apresentado a seguir.
+    \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state, initial, accepting](s0){$=$};
+        \node[state, right of=s0](s1){$\neq$};
+        \draw (s0) edge[bend left, above]node{$\begin{array}{l}0,\lambda/ZF\\ 1,\lambda/UF\end{array}$}(s1)
+        (s1) edge[loop right]node{$\begin{array}{l}0,Z/ZZ\\0,U/\lambda\\1,U/UU\\1,Z/\lambda\end{array}$}(s1)
+        (s1) edge[bend left, below]node{$\lambda,F/\lambda$}(s0);
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    Neste exemplo, o APD usa um símbolo (F) para marcar o final da pilha. Como a
+    cada 0 encontrado empilha-se um novo Z ou desempilha-se um U (o mesmo
+    raciocínio aplica-se para 1), temos que a pilha está vazia apenas quando um
+    prefixo contendo a mesma quantidade de 0s e de 1s foi processado. Para
+    detectarmos essa fato, usamos o símbolo F como o fundo de pilha.
+  \end{Example}
+
+  \section{Exercícios}
+
+  \begin{enumerate}
+     \item Construa APDs para as seguintes linguagens.
+       \begin{enumerate}
+       \item $\{0^n1^{2n}\,|\,n\geq 0\}$
+       \item $\{0^{3n}1^{2n}\,|\,n\geq 0\}$
+       \item $\{wxw^R\,|\,w\in\{0,1\}^*\}$
+       \item $\{0^m1^n\,|\,m < n\}$
+       \end{enumerate}
+  \end{enumerate}
 \end{document}
