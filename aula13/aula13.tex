@@ -1,0 +1,416 @@
+\documentclass[a4paper]{article}
+
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{proof,tikz}
+\usepackage{amssymb,amsthm,stmaryrd, amsmath}
+
+
+\usepackage[edges]{forest}
+\usetikzlibrary{automata, positioning, arrows}
+
+
+\newtheorem{Lemma}{Lema}
+\newtheorem{Theorem}{Teorema}
+\theoremstyle{definition}
+\newtheorem{Example}{Exemplo}
+\newtheorem{Definition}{Definição}
+
+
+\usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \lhead{Teoria da Computação}
+  \rhead{Aula 12}
+  \lfoot{Prof. Rodrigo Ribeiro}
+  \rfoot{\thepage}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \pagestyle{fancy}
+
+\tikzset{
+        -,  % makes the edges directed
+        >=stealth', % makes the arrow heads bold
+        node distance=3cm,
+        every state/.style={thick, fill=gray!10},
+        initial text=$\,$
+        }
+  
+
+\begin{document}
+
+  \title{Aula 13 - Manipulação de gramáticas livres de contexto}
+  \author{Rodrigo Ribeiro}
+
+  \maketitle
+
+
+  \pagestyle{fancy}
+
+
+  \section*{Objetivos}
+
+  \begin{itemize}
+     \item Apresentar os algoritmos para remoção de símbolos inúteis, regras
+       $\lambda$, eliminar regras encadeadas e regras recursivas à esquerda.
+  \end{itemize}
+
+
+  \section{Remoção de símbolos inúteis}
+
+  \begin{Definition}[Variável útil]\label{varutil}
+    Seja uma GLC $G=(V,\Sigma,R,P)$. Dizemos que $X \in V$ é útil
+    se existem $u,v\in (V\cup\Sigma)^*$ e $w \in \Sigma^*$ tais que
+    \[
+      P \Rightarrow^* uXv \Rightarrow^* w
+    \]
+  \end{Definition}
+ 
+  \begin{Example}
+    Considere a seguinte GLC $G=(\{P,A,B,C\},\{a,b,c\}, R, P)$ em que
+    $R$ é dado por:
+    \[
+      \begin{array}{l}
+        P \to AB\,|\,a\\
+        B \to c \\
+        C \to c
+      \end{array}
+    \]
+    Observe que, de acordo com a Definição \ref{varutil}:
+    \begin{itemize}
+      \item $C$ é inútil: não existem $u,v$ tais que $P\Rightarrow^*uCv$.
+      \item $A$ é inútil: não existe $w$ tal que $A \Rightarrow^* w$.
+      \item $B$ é inútil: pois somente ocorre em uma regra contendo outra
+        variável inútil ($A$).
+    \end{itemize}
+    Eliminado todas as variáveis inúteis e os símbolos do alfabeto somente
+    referenciados por elas, temos a seguinte gramática equivalente.
+    \[
+      G =(\{P\},\{a\},\{P\to a\},P)
+    \]
+  \end{Example}
+
+  A seguir apresentaremos o método para remoção de símbolos inúteis. Porém,
+  antes faz-se necessário introduzir a notação $\Rightarrow_G$ que especifica
+  que uma derivação está sendo feita usando as regras da gramática $G$.
+
+  \begin{Theorem}\label{thmvarinutil}
+    Seja $G$ uma gramática tal que $L(G) \neq \emptyset$. Então, existe uma GLC
+    $G'$, equivalente a $G$, sem variáveis inúteis.
+  \end{Theorem}
+  \begin{proof}
+    Seja $G = (V,\Sigma,R,P)$ uma GLC tal que $L(G) \neq \emptyset$. Pode-se
+    construir uma GLC $G_2$, equivalente a $G$, sem variáveis inúteis seguindo
+    os passos:
+    \begin{enumerate}
+       \item Obtenha $G_1 = (V_1, \Sigma, R_1, P)$, em que:
+         \begin{itemize}
+            \item $V_1 =\{X \in V\,|\, X\Rightarrow^*_Gw \land w \in \Sigma^*\}$
+            \item $R_1 =\{r \in R\,|\,r \text{ não contém símbolo de } V - V_1\}$
+         \end{itemize}
+       \item Obtenha $G_2 = (V_2,\Sigma, R_2,P)$, a partir de $G_1$, em que:
+         \begin{itemize}
+           \item $V_2 =\{X \in V\,|\,P \Rightarrow^*_{G_1}uXv\}$
+           \item $R_1 =\{r \in R\,|\,r \text{ não contém símbolo de } V_1 - V_2\}$  
+         \end{itemize}
+    \end{enumerate}
+  \end{proof}
+
+  \begin{Example}
+    Para exemplificar a construção de uma gramática sem símbolos inúteis,
+    considere a seguinte GLC $G = (\{A,B,C,D,E,F\},\{0,1\},R,A)$, em que $R$ é
+    formado pelas segras a seguir.
+    \[
+      \begin{array}{l}
+        A \to ABC \,|\, AEF\,|\,BD\\
+        B \to B0 ,\|\,0\\
+        C \to 0C\,|\,EB\\
+        D \to 1D\,|\,1\\
+        E \to EB \\
+        F \to 1F1\,|\,1\\
+      \end{array}
+    \]
+    Ao aplicarmos o primeiro passo do Teorema \ref{thmvarinutil}, obtemos o
+    seguinte conjunto $V_1 =\{B,D,F,A\}$. Logo, a GLC $G_1$ possui as seguintes
+    regras:
+    \[
+      \begin{array}{l}
+        A \to BD\\
+        B \to B0 ,\|\,0\\
+        D \to 1D\,|\,1\\
+        F \to 1F1\,|\,1\\
+      \end{array}
+    \]
+    Usando o segundo passo do referido teorema, obtemos o conjunto $V_2
+    =\{A,B,D\}$ e as seguintes regras:
+    \[
+      \begin{array}{l}
+        A \to BD\\
+        B \to B0 ,\|\,0\\
+        D \to 1D\,|\,1\\
+      \end{array}
+    \]   
+  \end{Example}
+
+  \section{Eliminação de uma regra $X \to w$}
+
+  \begin{Theorem}
+    Seja uma GLC $G = (V,\Sigma,R,P)$ e $X \to w \in R,\, X\neq P$. Existe uma
+    GLC $G_1 = (V, \Sigma, R_1, P)$ equivalente a $G$ sem a regra $X \to w$.
+  \end{Theorem}
+  \begin{proof}
+    A gramática $G_1$ possui o seguinte conjunto de regras $R_1$, obtido a
+    partir de $R$:
+    \begin{enumerate}
+    \item para cada regra $Y \to z \in R$, para cada forma de escrever
+      $x_1Xx_2...X_{n + 1}$, em que $n\geq 0$ e $x_i \in (V\cup \Sigma)^*$,
+      coloque a regra $Y \to x_1wx_2w...wx_{n+1}$ em $R_1$.
+    \item Retire $X \to w$ de $R_1$.
+    \end{enumerate}
+  \end{proof}
+
+
+  \begin{Example}
+    Considere a gramática $G = (\{P,A,B\},\{a,b,c\},R,P)$ em que $R$ é
+    formado pelas regras:
+    \[
+      \begin{array}{l}
+        P \to ABA\\
+        A \to aA\,|\,a \\
+        B \to bBc\,|\,\lambda
+      \end{array}
+    \]
+    Considere a necessidade de eliminar a regra $A\to a$. Primeiramente,
+    a regra $P \to ABA$ dá origem as seguintes regras:
+    \[
+      P \to ABA\,|\,aBA\,|\,ABa\,|\,aBa
+    \]
+    e a regra $A \to aA$ dá origem a:
+    \[
+      A \to aA \,|\, aa
+    \]
+    Com isso, a gramática resultante é formada pelas seguintes regras.
+    \[
+      \begin{array}{l}
+        P \to ABA\,|\,aBA\,|\,ABa\,|\,aBa\\
+        A \to aA\,|\,aa \\
+        B \to bBc\,|\,\lambda
+      \end{array}
+    \]
+  \end{Example}
+
+  \section{Eliminação de variáveis anuláveis}
+
+  \begin{Definition}\label{varanul}
+    Seja uma GLC $G = (V,\Sigma,R,P)$. Dizemos que uma variável $X \in V$ é
+    anulável se $X \Rightarrow^* \lambda$. O conjunto de variáveis anuláveis de
+    $G$, $\mathcal{A}_G$, pode ser definido indutivamente da seguinte maneira:
+    \begin{enumerate}
+       \item $\mathcal{A}_G = \{ X \in V \,|\, X \to \lambda \in R\}$.
+       \item $\mathcal{A}_G = \{ X \in V \,|\, X \to z \land z \in \mathcal{A}_G^*\}$.   
+    \end{enumerate}
+  \end{Definition}
+
+  \begin{Example}
+    Considere a seguinte GLC:
+    \[
+      \begin{array}{l}
+        P \to ABC \,|\, C\\
+        A \to AaaA \,|\, \lambda\\
+        B \to BBb \,|\,C \\
+        C \to cC \,|\, \lambda\\
+      \end{array}
+    \]
+    Pela Definição \ref{varanul}, identificamos o primeiro passo de
+    $\mathcal{A}_G =\{A,C\}$. Pelo segundo passo, temos que
+    $\mathcal{A}_G=\{A,C,P,B\}$.
+  \end{Example}
+
+  \begin{Theorem}
+    Para cada GLC existe uma GLC equivalente cuja única regra $\lambda$, se
+    houver, é $P \to \lambda$, em que $P$ é o símbolo de partida.
+  \end{Theorem}
+  \begin{proof}
+    Seja uma GLC $G = (V,\Sigma,R,P)$. Seja a GLC $G_1=(V,\Sigma,R_1,P)$ em que
+    $R_1$ é obtido da seguinte forma:
+    \begin{enumerate}
+       \item para cada regra $Y \to z \in R$, para cada forma de escrever $z$
+         como $x_1X_1x_2...X_nx_{n+1}$, $n \geq 0$, $x_i\in(V\cup\Sigma)^*$,
+         $x_1x_2...x_{n+1} \neq \lambda$ e $X_i \in \mathcal{A}_G$, coloque a regra
+         $Y \to x_1x_2...x_{n+1}$ em $R_1$.
+       \item Se $P\in \mathcal{A}_G$, então $P \to \lambda \in R_1$.
+    \end{enumerate}
+  \end{proof}
+
+  \begin{Example}
+    Vamos retomar o exemplo anterior e eliminar as variáveis anuláveis da
+    seguinte gramática:
+    \[
+      \begin{array}{l}
+        P \to ABC \,|\, C\\
+        A \to AaaA \,|\, \lambda\\
+        B \to BBb \,|\,C \\
+        C \to cC \,|\, \lambda\\
+      \end{array}
+    \]
+    Conforme apresentado anteriormente, temos que $\mathcal{A}_G=\{A,C,P,B\}$.
+    Aplicando o exposto no teorema anterior, obtemos a seguinte gramática.
+    \[
+      \begin{array}{l}
+        P \to ABC \,|\, AB\,|\, BC\,|\, AC\,|\, A \,|\, B \,|\,C\,|\, \lambda\\
+        A \to AaaA \,|\, aaA\,|\,Aaa\,|\,aa\\
+        B \to BBb \,|\,C \,|\,Bb\,|\,b\\
+        C \to cC \,|\, c \\
+      \end{array}
+    \]    
+  \end{Example}
+
+  \section{Eliminação de variáveis encadeadas}
+
+  \begin{Definition}[Variável encadeada]
+    Seja uma GLC $G=(V,\Sigma,R,P)$. Dizemos que uma variável $Z \in V$ é
+    encadeada a $X \in V$ se:
+    \begin{itemize}
+       \item $X \to Z \in R$ ;
+       \item $X \to Y$ e $Z$ é encadeada a $Y$. 
+    \end{itemize}
+  \end{Definition}
+
+  \begin{Example}
+    Vamos considerar a seguinte gramática para expressões aritméticas:
+    \[
+      \begin{array}{l}
+        E \to E + T \,|\, T\\
+        T \to T * F \,|\, F \\
+        F \to (E) \,|\, n \\
+      \end{array}
+    \]
+    Abaixo listamos o conjunto de variáveis encadeadas a cada uma das variáveis
+    dessa gramática.
+    \[
+      \begin{array}{l}
+      enc(F) =\{F\} \\
+      enc(T) = \{T,F\} \\
+        enc(E) = \{E,T,F\}\\
+      \end{array}
+    \]
+  \end{Example}
+
+  \begin{Theorem}
+     Seja uma GLC $G=(V,\Sigma,R,P)$. Existe uma GLC, equivalente a $G$, sem
+     variáveis encadeadas.
+   \end{Theorem}
+   \begin{proof}
+     A gramática equivalente a $G$ é $G_1=(V,\Sigma,R_1,P)$, em que
+     \[
+       R_1 = \{X \to w \,|\, Y \in enc(X), Y \to w \in R \land w \not\in V\}
+     \]
+   \end{proof}
+
+  \begin{Example}
+    Vamos considerar a seguinte gramática para expressões aritméticas:
+    \[
+      \begin{array}{l}
+        E \to E + T \,|\, T\\
+        T \to T * F \,|\, F \\
+        F \to (E) \,|\, n \\
+      \end{array}
+    \]
+    Abaixo listamos o conjunto de variáveis encadeadas a cada uma das variáveis
+    dessa gramática.
+    \[
+      \begin{array}{l}
+      enc(F) =\{F\} \\
+      enc(T) = \{T,F\} \\
+        enc(E) = \{E,T,F\}\\
+      \end{array}
+    \]
+    A gramática equivalente sem variáveis encadeadas é:
+    \[
+      \begin{array}{l}
+        E \to E + T \,|\, T*F \,|\, (E)\,|\,n\\
+        T \to T * F \,|\, (E)\,|\,n \\
+        F \to (E) \,|\, n \\
+      \end{array}
+    \]
+  \end{Example}
+
+  \section{Eliminação de regras recursivas à esquerda}
+
+  \begin{Definition}[Regra recursiva à esquerda]
+    Seja uma GLC $G = (V,\Sigma,R,P)$. Dizemos que a regra $A \to Ay$, $A\in V$,
+    $y \in (V\cup \Sigma)^*$ é recursiva à esquerda em G.
+  \end{Definition}
+
+  \begin{Theorem}\label{elimrecleft}
+    Para qualquer GLC existe uma GLC equivalente sem regras recursivas à esquerda.
+  \end{Theorem}
+  \begin{proof}
+    Sejam as seguintes todas as regras $X$ para $G$:
+    \[
+      X \to Xy_1\,|\,Xy_2\,|\,...\,|\,Xy_n\,|\,w_1\,|\,w_2\,|\,...\,|\,w_k
+    \]
+    Para eliminar a recursão a esquerda basta substituir as regras $X$ por
+    ($Z$ é uma nova variável):
+    \[
+      \begin{array}{l}
+        X \to w_1\,|\,w_2\,|\,...\,|\,w_k\,|\,w_1Z\,|\,w_2Z\,|\,...\,|\,w_kZ\\
+        Z \to y_1\,|\,y_2\,|\,...\,|\,y_n\,|\,y_1Z\,|\,y_2Z\,|\,...\,|\,y_nZ\\
+      \end{array}
+    \]
+  \end{proof}
+  \begin{Example}
+    Vamos considerar a tarefa de remover regras recursivas à esquerda da
+    seguinte GLC:
+    \[
+      E \to E+E \,|\,E*E\,|\,(E)\,|\,n
+    \]
+    A GLC equivalente sem regras recursivas a esquerda é obtida
+    usando o Teorema \ref{elimrecleft}.
+    \[
+      \begin{array}{l}
+        E \to (E)\,|\,n \,|\,(E)Z\,|\,nZ\\
+        Z \to +E \,|\,*E\,|\,+EZ \,|\,*EZ\\
+      \end{array}
+    \]
+  \end{Example}
+
+  
+  \section{Exercícios} 
+
+  \begin{enumerate}
+     \item Construa uma gramática equivalente sem variáveis anuláveis.
+       \[
+         \begin{array}{l}
+           P \to BPA \,|\,A \\
+           A \to aA \,|\, \lambda\\
+           B \to Bba \,|\,\lambda\\
+         \end{array}
+       \]
+     \item Construa uma gramática equivalente sem variáveis encadeadas e
+       símbolos inúteis.
+       \[
+         \begin{array}{l}
+           P \to A \,|\,BC\\
+           A \to B \,|\, C\\
+           C \to cC \,|\, c\\
+         \end{array}
+       \]
+     \item Construa uma gramática equivalente sem regras recursivas à esquerda.
+       O alfabeto para essa gramática é $\{0,1,2\}$.
+       \[
+         \begin{array}{l}
+           T \to 0\, |\, 1 \,|\, T\,T\,|\,2\,1\,T 
+         \end{array}
+       \]
+     \item Mostre que para toda GLC $G = (V,\Sigma,R,P)$, existe uma GLC equivalente em que toda
+       regra são da seguinte forma:
+       \begin{itemize}
+       \item $P \to \lambda$, se $\lambda \in L(G)$.
+       \item $X \to a$, para $X \in V$ e $a\in\Sigma$.
+       \item $X \to w$, para $X\in V$ e $w \in (V\cup\Sigma)^*$, $|w|\geq 2$.
+       \end{itemize}
+  \end{enumerate}
+\end{document}
