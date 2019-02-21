@@ -1,0 +1,328 @@
+\documentclass[a4paper]{article}
+
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{proof,tikz}
+\usepackage{amssymb,amsthm,stmaryrd, amsmath}
+
+
+\usepackage[edges]{forest}
+\usetikzlibrary{automata, positioning, arrows}
+
+
+\newtheorem{Lemma}{Lema}
+\newtheorem{Theorem}{Teorema}
+\theoremstyle{definition}
+\newtheorem{Example}{Exemplo}
+\newtheorem{Definition}{Definição}
+
+
+\usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \lhead{Teoria da Computação}
+  \rhead{Aula 14}
+  \lfoot{Prof. Rodrigo Ribeiro}
+  \rfoot{\thepage}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \pagestyle{fancy}
+
+\tikzset{
+        -,  % makes the edges directed
+        >=stealth', % makes the arrow heads bold
+        node distance=3cm,
+        every state/.style={thick, fill=gray!10},
+        initial text=$\,$
+        }
+  
+
+\begin{document}
+
+  \title{Aula 14 - Formas normais de Chomsky e Greibach}
+  \author{Rodrigo Ribeiro}
+
+  \maketitle
+
+
+  \pagestyle{fancy}
+
+
+  \section*{Objetivos}
+
+  \begin{itemize}
+     \item Apresentar a definição das formas normais de Chomsky e Greibach.
+     \item Apresentar a construção de GLCs equivalentes nas formais normais
+       a partir de uma GLC qualquer.     
+  \end{itemize}
+
+
+  \section{Forma normal de Chomsky}
+
+  \begin{Definition}[Forma normal de Chomsky (FNC)]\label{FNC}
+    Seja uma GLC $G=(V,\Sigma,R,P)$. Dizemos que $G$ está na forma normal de
+    Chomsky (FNC) se todas as suas regras estão nas formas:
+    \begin{itemize}
+      \item $P \to \lambda$
+      \item $X \to a$, $X \in V$ e $a \in\Sigma$
+      \item $X \to YZ$, $X,Y,Z \in V$.
+    \end{itemize}
+  \end{Definition}
+
+  \begin{Lemma}\label{lema1}
+    Para qualquer GLC $G = (V,\Sigma,R,P)$ existe uma GLC equivalente em que
+    todas as regras são das formas:
+    \begin{itemize}
+      \item $P \to \lambda$, se $\lambda \in L(G)$.
+      \item $X \to a$, para $X \in V$ e $a \in \Sigma$.
+      \item $X \to w$, para $X \in V$, $|w|\geq 2$ e $w \in (V\cup\Sigma)^*$.
+    \end{itemize}
+  \end{Lemma}
+  \begin{proof}
+    A GLC equivalente a $G$ com essas propriedades é a resultante de
+    \begin{itemize}
+       \item eliminar variáveis anuláveis.
+       \item eliminar variáveis encadeadas.
+       \item eliminar símbolos inúteis.
+    \end{itemize}
+    da gramática $G_1 = (V \cup \{P_1\}, \Sigma, R\cup \{P_1 \to P\}, P_1)$.   
+  \end{proof}
+  \begin{Theorem}\label{thmfnc}
+    Seja uma GLC $G$. Existe uma GLC equivalente a $G$ na FNC.
+  \end{Theorem}
+  \begin{proof}
+    Pelo Lema \ref{lema1}, temos uma GLC em que toda regra são das formas:
+    \begin{itemize}
+      \item $P \to \lambda$, se $\lambda \in L(G)$.
+      \item $X \to a$, para $X \in V$ e $a \in \Sigma$.
+      \item $X \to w$, para $X \in V$, $|w|\geq 2$ e $w \in (V\cup\Sigma)^*$.
+    \end{itemize}
+    Logo, para estar na FNC, basta lidar com as regras da forma $X \to w$, $|w|
+    \geq 2$. Para isso:
+    \begin{enumerate}
+      \item Modificar cada regra $X \to w$, $|w|\geq 2$, de forma que ela
+        contenha apenas variáveis. Para isso, substitua cada $a\in \Sigma$ em
+        $w$ por uma variável $Y \to a$, caso essa regra exista. Caso não haja
+        tal regra na gramática, criar uma nova variável $Z$ com a regra $Z \to
+        a$ e substituir $a$ por $Z$ em $w$.
+      \item Substituir cada regra $X \to Y_1Y_2...Y_n$, $n \geq 3$, em que cada
+        $Y_i$ é uma variável, pelas regras:
+        \[
+          \begin{array}{l}
+            X \to Y_1 Z_1\\
+            Z_1 \to Y_2Z_2 \\
+            \vdots \\
+            Z_{n - 2} \to Y_{n - 1}Y_n\\
+          \end{array}
+        \]
+        em que cada $Z_i$ é uma nova variável.
+    \end{enumerate}
+  \end{proof}
+
+  \begin{Example}
+    Considere a seguinte GLC:
+    \[
+      \begin{array}{l}
+        L \to (S) \\
+        S \to SE \,|\, \lambda\\
+        E \to a \,|\, L \\
+      \end{array}
+    \]
+    Vamos mostrar o passo-a-passo da obtenção da GLC equivalente na FNC.
+    Primeiro, vamos obter uma GLC com um novo símbolo de partida, conforme
+    especificado pelo Lema \ref{lema1}.
+    \[
+      \begin{array}{l}
+        P \to L \\
+        L \to (S) \\
+        S \to SE \,|\, \lambda\\
+        E \to a \,|\, L \\
+      \end{array}
+    \]
+    O próximo passo consiste em eliminar variáveis anuláveis. O conjunto de
+    variáveis anuláveis de $G$ é: $\mathcal{A}_G =\{S\}$. Eliminando as regras
+    $\lambda$, temos:
+    \[
+      \begin{array}{l}
+        P \to L \\
+        L \to (S)\,|\,() \\
+        S \to SE \,|\, E\\
+        E \to a \,|\, L \\
+      \end{array}
+    \]
+    Na sequência, devemos eliminar as variáveis encadeadas. O conjunto de
+    variáveis encadeadas é apresentado a seguir.
+    \[
+      \begin{array}{l}
+        enc(L) =\{L\} \\
+        enc(E) =\{E,L\}  \\
+        enc(S) = \{S, E, L\} \\
+        enc(P) = \{P,L\}\\
+      \end{array}
+    \]
+    Eliminando as variáveis encadeadas, obtemos a seguinte gramática:
+    \[
+      \begin{array}{l}
+        P \to (S) \,|\, () \\
+        L \to (S)\,|\,() \\
+        S \to SE \,|\, a \,|\, (S)\,|\, ()\\
+        E \to a \,|\, (S)\,|\,() \\
+      \end{array}
+    \]
+    Finalmente, resta eliminar os símbolos inúteis. Note que a variável $L$ não
+    é alcançável a partir de $P$. Logo, todas as regras que mencionam $L$ devem
+    ser removidas da gramática. Com isso obtemos:
+    \[
+      \begin{array}{l}
+        P \to (S) \,|\, () \\
+        S \to SE \,|\, a \,|\, (S)\,|\, ()\\
+        E \to a \,|\, (S)\,|\,() \\
+      \end{array}
+    \]
+    Que é a gramática resultante da aplicação da construção do Lema \ref{lema1}.
+    Para obter a GLC na FNC, basta transformar todas as regras de tamanho maior
+    ou igual a 2. Fazendo esse passo, obtemos:
+    \[
+      \begin{array}{l}
+        P \to AZ_1 \,|\, AF \\
+        A \to (\\
+        F \to )\\
+        Z_1 \to SF \\
+        S \to SE \,|\, a \,|\, AZ_1\,|\, AF\\
+        E \to a \,|\, AZ_1\,|\,AF \\
+      \end{array}
+    \]
+    que é a GLC equivalente a gramática original na FNC.
+  \end{Example}
+
+  \section{Forma Normal de Greibach (FNG)}
+
+
+  \begin{Definition}[Forma normal de Greibach (FNG)]
+      Seja uma GLC $G=(V,\Sigma,R,P)$. Dizemos que $G$ está na forma normal de
+    Greibach (FNG) se todas as suas regras estão nas formas:
+    \begin{itemize}
+      \item $P \to \lambda$
+      \item $X \to ay$, $X \in V, a \in\Sigma$ e $y \in V^*$
+    \end{itemize}
+  \end{Definition}
+
+  \begin{Lemma}\label{lema2}
+    Seja uma GLC $G = (V,\Sigma,R,P)$ em que $X \to uYv \in R$, $X,Y \in V$ e $X
+    \neq Y$. Sejam $Y \to w_1\,|\,...\,|\,w_n$ todas as regras $Y$ em $G$.
+    Seja $G' = (V,\Sigma,R',P)$ em que:
+    \[
+      R' = \{R - \{X \to uYv\}\} \cup \{X \to uw_1v\,|\,...\,|\,uw_nv\}
+    \]
+    Temos que $L(G') = L(G)$.
+  \end{Lemma}
+  
+  \begin{Theorem}\label{thmfng}
+    Seja uma GLC $G$. Existe uma GLC equivalente a $G$ na FNG.
+  \end{Theorem}
+  \begin{proof}
+    Primeiramente, usamos o Lema \ref{lema1} e aplicamos o primeiro passo
+    (converter $a\in \Sigma$ em variáveis) do Teorema \ref{thmfnc}. Com isso,
+    teremos uma gramática em que toda regra possui a forma $X \to Yy$, em que
+    $X,Y \in V$ e $y \in V^+$. Em seguida, para cada $X \in
+    V$ faça enquanto possível:
+    \begin{enumerate}
+       \item Se existe uma regra $X \to Yy$, $|y| \geq 1$,
+          aplica-se o Lema \ref{lema2} para substituir 
+        $Y$ (isso não se aplica a variáveis introduzidas por eliminação de
+        recursão à esquerda).
+      \item Se existe uma regra $X \to Xy$, para $|y| \geq 1$, aplica-se 
+        a remoção de recursão à esquerda. 
+    \end{enumerate}
+  \end{proof}
+
+  \begin{Example}
+    Como um exemplo da construção de uma gramática equivalente na FNG, vamos
+    considerar a gramática utilizada anteriormente para a FNC. Aqui começaremos
+    o processo a partir da aplicação do Lema \ref{lema1}.
+    \[
+      \begin{array}{l}
+        P \to (S) \,|\, ()\\
+        S \to SE \,|\, a \,|\, (S)\,|\, ()\\
+        E \to a \,|\, (S)\,|\,()\\
+      \end{array}
+    \]
+    Agora, vamos trocar todos os símbolos do alfabeto em questão por variáveis,
+    em regras $X \to w$, $|w| \geq 2$. Isso resulta na seguinte gramática:
+    \[
+      \begin{array}{l}
+        P \to ASF \,|\, AF \\
+        S \to SE \,|\, a \,|\, ASF\,|\, AF\\
+        E \to a \,|\, ASF\,|\,AF\\
+        A \to ( \\
+        F \to ) \\
+      \end{array}
+    \]
+     Agora, vamos proceder
+    à execução dos passos adicionais presentes no Teorema \ref{thmfng}.
+    
+    Inicialmente, vamos usar o Lema \ref{lema2} para eliminar a regra $A \to ($.
+    Isso resulta na gramática:
+    \[
+      \begin{array}{l}
+        P \to (SF \,|\, (F \\
+        S \to SE \,|\, a \,|\, (SF\,|\, (F\\
+        E \to a \,|\, (SF\,|\,(F\\
+        F \to ) \\
+      \end{array}
+    \]
+    Observe que a única regra que não está de acordo com a FNG é $S \to SE$.
+    Agora aplicamos a eliminação de recursão à esquerda. Com isso, obtemos:
+    \[
+      \begin{array}{l}
+        P \to (SF \,|\, (F \\
+        S \to aZ_1\,|\, (SFZ_1 \,|\, (FZ_1\,|\, a \,|\, (SF\,|\, (F\\
+        E \to a \,|\, (SF\,|\,(F\\
+        F \to ) \\
+        Z_1 \to EZ_1 \,|\, E
+      \end{array}
+    \]
+    O próximo passo, é eliminar as regras $E$. Com isso, obtemos:
+    \[
+      \begin{array}{l}
+        P \to (SF \,|\, (F \\
+        S \to aZ_1\,|\, (SFZ_1 \,|\, (FZ_1\,|\, a \,|\, (SF\,|\, (F\\
+        F \to ) \\
+        Z_1 \to aZ_1 \,|\, (SFZ_1 \,|\, (FZ_1\,|\, a\,|\,(SF \,|\, (F\\
+      \end{array}
+    \]
+    que é uma gramática equivalente na FNG.
+  \end{Example}
+
+  \section{Exercícios} 
+
+  \begin{enumerate}
+     \item Construa uma gramática equivalente na FNC.
+       \[
+         \begin{array}{l}
+           P \to BPA \,|\,A \\
+           A \to aA \,|\, \lambda\\
+           B \to Bba \,|\,\lambda\\
+         \end{array}
+       \]
+     \item Construa uma gramática equivalente na FNG
+       \[
+         \begin{array}{l}
+           P \to A \,|\,BC\\
+           A \to B \,|\, C\\
+           C \to cC \,|\, c\\
+         \end{array}
+       \]
+     \item Construa uma gramática equivalente na FNC.
+       O alfabeto para essa gramática é $\{0,1,2\}$.
+       \[
+         \begin{array}{l}
+           T \to 0\, |\, 1 \,|\, T\,T\,|\,2\,1\,T 
+         \end{array}
+       \]
+     \item Mostre como construir uma gramática na FNC a partir de uma gramática
+       na FNG.
+  \end{enumerate}
+\end{document}
