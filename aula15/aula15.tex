@@ -1,0 +1,206 @@
+\documentclass[a4paper]{article}
+
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{proof,tikz}
+\usepackage{amssymb,amsthm,stmaryrd, amsmath}
+
+
+\usepackage[edges]{forest}
+\usetikzlibrary{automata, positioning, arrows}
+
+
+\newtheorem{Lemma}{Lema}
+\newtheorem{Theorem}{Teorema}
+\theoremstyle{definition}
+\newtheorem{Example}{Exemplo}
+\newtheorem{Definition}{Definição}
+
+
+\usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \lhead{Teoria da Computação}
+  \rhead{Aula 15}
+  \lfoot{Prof. Rodrigo Ribeiro}
+  \rfoot{\thepage}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \pagestyle{fancy}
+
+\tikzset{
+        -,  % makes the edges directed
+        >=stealth', % makes the arrow heads bold
+        node distance=3cm,
+        every state/.style={thick, fill=gray!10},
+        initial text=$\,$
+        }
+  
+
+\begin{document}
+
+  \title{Aula 15 - Equivalência entre autômatos de pilha e gramáticas livres de contexto}
+  \author{Rodrigo Ribeiro}
+
+  \maketitle
+
+
+  \pagestyle{fancy}
+
+
+  \section*{Objetivos}
+
+  \begin{itemize}
+     \item Apresentar a construção de um APN a partir de uma gramática.
+     \item Apresentar a construção de uma gramática a partir de um APN.     
+  \end{itemize}
+
+  \section{Equivalência entre GLCs e APs}
+
+  \subsection{Construindo um AP a partir de uma GLC}
+
+  \begin{Theorem}
+    Para qualquer GLC $G$, existe um AP $M$ que aceita $L(G)$.
+  \end{Theorem}
+  \begin{proof}
+    Seja $G' = (V,\Sigma,R,P)$ a gramática equivalente a $G$ na FNG.
+    Um APN que aceita $L(G')$ é: $M=(\{i,f\},\Sigma, V, \delta,\{i\},\{f\})$,
+    em que $\delta$ é tal que:
+    \begin{itemize}
+      \item $\delta(i,\lambda,\lambda) = \{[f, P]\}$
+      \item Se $P \to \lambda \in R,\,\delta(f,\lambda,P) = \{[f,\lambda]\}$
+      \item $\delta(f, a, X) = \{[f,y]\,|\,y \in V^* \land X \to ay \in R\}$.
+    \end{itemize}
+  \end{proof}
+
+  \begin{Example}
+    Para ilustrar a construção de um AP a partir de uma gramática, vamos
+    considerar a seguinte gramática na FNG:
+    \[
+      \begin{array}{l}
+        P \to 0PUP\,|\,1PZP\,|\,\lambda\\
+        U \to 1 \\
+        Z \to 0 \\
+      \end{array}
+    \]
+    O AP que aceita $L(G)$ é apresentado abaixo:
+    \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state, initial](i){$i$};
+        \node[state, accepting, right of=i](f){$f$};
+        \draw (i) edge[above] node{$\lambda,\lambda/P$}(f)
+        (f) edge[loop right]
+        node{$
+          \begin{array}{l}
+            \lambda, P / \lambda \\
+            0, P / PUP \\
+            1, P / PZP \\
+            1, U / \lambda \\
+            0, Z / \lambda \\
+          \end{array}
+          $}(f) ;
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+  \end{Example}
+
+  \subsection{Construindo uma GLC a partir de um AP}
+
+  \begin{Theorem}\label{thmglcap}
+    Para cada AP $M$, existe uma GLC que gera $L(M)$.
+  \end{Theorem}
+  \begin{proof}
+    Seja $M = (E,\Sigma,\Gamma,I,F)$. A gramática $G = (V,\Sigma,R,P)$ tal que
+    $L(G) = L(M)$ é:
+    \begin{itemize}
+      \item $V = \{P\} \cup E \times (\Gamma \cup \{\lambda\}) \times E$.
+      \item O conjunto de regras $R$ é formado por:
+        \begin{itemize}
+           \item Para cada $i \in I$ e $f \in F$, $P \to [i,\lambda,f]$;
+           \item Para cada $e\in E$, $[e,\lambda,e] \to \lambda$;
+           \item Para cada transição $[e',z] \in \delta(e, a, A)$, em que $a\in
+             \Sigma\cup\{\lambda\}$, $z\in \Gamma^*$ e $A \in \Gamma \cup
+             \{\lambda\}$, temos as seguintes regras:
+             \begin{itemize}
+               \item Se $z = \lambda$, $[e,A,d] \to a[e',\lambda,d]$ para cada
+                 $d \in E$.
+               \item Se $z\neq \lambda$, $[e,A,d] \to a[e', B_1,
+                 d_1]...[d_{n-1},B_n,d_n]$, em que $z = B_1...B_n$ e
+                 $d_1,...,d_n \in E$.
+               \item Se $A = \lambda$, adicionamente temos as seguintes regras:
+                 \begin{itemize}
+                   \item Se $z = \lambda$, $[e,C,d] \to a[e',C,d]$, para cada $C \in \Gamma$ e
+                     cada $d \in E$.
+                   \item Se $z \neq \lambda$, $[e,C,d] \to a[e',B_1,d_1]...[d_{n
+                       - 1},B_n,d_n][d_n,C,d_{n + 1}]$ para cada $C \in \Gamma$ e
+                    cada $d_1,...,d_{n+1} \in E$.
+                 \end{itemize}
+             \end{itemize}
+        \end{itemize}
+    \end{itemize}
+  \end{proof}
+
+  \begin{Example}
+    Para ilustrar a construção de uma gramática equivalente a um APN, considere o seguinte AP:
+    \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state,initial,accepting](i){$i$};
+        \node[state,accepting, right of=i](f){$f$};
+        \draw (i)edge[loop above]node{$0,\lambda/X$}(i)
+        (i)edge[above]node{$1,X/\lambda$}(f)
+        (f)edge[loop above]node{$1,X/\lambda$}(f);
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    De acordo com a construção apresentada no Teorema \ref{thmglcap},
+    inicialmente criamos as seguintes regras:
+    \[
+      \begin{array}{l}
+        P \to \lbrack i, \lambda,i \rbrack \,|\, \lbrack i, \lambda,f \rbrack\\
+        \lbrack i, \lambda,i \rbrack \to \lambda \\
+        \lbrack f, \lambda,f \rbrack \to \lambda \\
+      \end{array}
+    \]
+    Para a transição $\delta(i,0,\lambda) = [i,X]$ temos as seguintes regras:
+    \[
+      \begin{array}{l}
+        \lbrack i, \lambda, i \rbrack \to 0 \lbrack i , X , i \rbrack \,|\, 0
+        \lbrack i , X , f \rbrack \\
+        \lbrack i, X , f \rbrack \to 0 \lbrack i, X ,i \rbrack \lbrack i, X , f
+        \rbrack \,|\, 0 \lbrack i , X , f \rbrack\lbrack i, X , f \rbrack\\
+      \end{array}
+    \]
+  \end{Example}
+  
+  \section{Exercícios} 
+
+  \begin{enumerate}
+     \item Construa uma gramática equivalente na FNC.
+       \[
+         \begin{array}{l}
+           P \to BPA \,|\,A \\
+           A \to aA \,|\, \lambda\\
+           B \to Bba \,|\,\lambda\\
+         \end{array}
+       \]
+     \item Construa uma gramática equivalente na FNG
+       \[
+         \begin{array}{l}
+           P \to A \,|\,BC\\
+           A \to B \,|\, C\\
+           C \to cC \,|\, c\\
+         \end{array}
+       \]
+     \item Construa uma gramática equivalente na FNC.
+       O alfabeto para essa gramática é $\{0,1,2\}$.
+       \[
+         \begin{array}{l}
+           T \to 0\, |\, 1 \,|\, T\,T\,|\,2\,1\,T 
+         \end{array}
+       \]
+     \item Mostre como construir uma gramática na FNC a partir de uma gramática
+       na FNG.
+  \end{enumerate}
+\end{document}
