@@ -1,0 +1,316 @@
+\documentclass[a4paper]{article}
+
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{proof,tikz}
+\usepackage{amssymb,amsthm,stmaryrd}
+
+
+\usepackage[edges]{forest}
+\usetikzlibrary{automata, positioning, arrows}
+
+
+\newtheorem{Lemma}{Lema}
+\newtheorem{Theorem}{Teorema}
+\theoremstyle{definition}
+\newtheorem{Example}{Exemplo}
+\newtheorem{Definition}{Definição}
+
+
+\usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \lhead{Teoria da Computação}
+  \rhead{Aula 11}
+  \lfoot{Prof. Rodrigo Ribeiro}
+  \rfoot{\thepage}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \pagestyle{fancy}
+
+\tikzset{
+        ->,  % makes the edges directed
+        >=stealth', % makes the arrow heads bold
+        node distance=3cm,
+        every state/.style={thick, fill=gray!10},
+        initial text=$\,$
+        }
+  
+
+\begin{document}
+
+  \title{Aula extra 1 - Derivadas para expressões regulares}
+  \author{Rodrigo Ribeiro}
+
+  \maketitle
+
+
+  \pagestyle{fancy}
+
+
+  \section*{Objetivos}
+
+  \begin{itemize}
+     \item Apresentar o conceito de derivadas de expressão regular
+       e como esse pode ser usado para implementar algoritmos
+       de casamento de padrão.
+     \item Apresentar a construção de um AFD a partir de uma
+          expressão regular, usando derivadas.
+  \end{itemize}
+
+
+  \section{Derivadas de expressões regulares}
+
+  \begin{Definition}[Derivada de linguagens]
+    Seja $L \subseteq \Sigma^*$ e $a \in \Sigma$. A derivada
+    de $L$ com respeito ao símbolo $a$ é definida como
+    \[
+      L_a =\{w \in \Sigma^*\,|\, aw \in L\}
+    \]
+  \end{Definition}
+
+  \begin{Example}
+    Considere a seguinte linguagem $L = \{01, 10, 11, 000, 101\}$.
+    Temos que $L_0 =\{1, 00\}$. Isso é, $L_0$ é o conjunto formado
+    pelo sufixo de palavras pertencentes a $L$ que começam com $0$,
+    sem esse símbolo. Evidentemente, se uma palavra não inicia com $0$,
+    essa não faz parte do conjunto $L_0$.
+  \end{Example}
+
+  A definição acima apresenta o conceito de derivada em termos de conjuntos.
+  Uma definição alternativa define esse conceito em termos de expressões
+  regulares. Para isso, é necessário definir uma função que determina se
+  uma certa expressão regular $e$ aceita ou não a palavra vazia, $\lambda$.
+
+  \begin{Definition}
+    A função $\nu$ determina se $\lambda$ pertence a linguagem de uma expressão
+    regular $e$.
+    \[
+      \begin{array}{lcl}
+        \nu(\emptyset) & = & \bot\\
+        \nu(\lambda)   & = & \top \\
+        \nu(a)         & = & \bot \\
+        \nu(e_1\,e_2)  & = & \nu(e_1) \land \nu(e_2)\\
+        \nu(e_1 + e_2) & = & \nu(e_1) \lor \nu(e_2)\\
+        \nu(e^*)       & = & \top  
+      \end{array}
+    \]
+  \end{Definition}  
+
+  \begin{Example}
+    A expressão regular $a^*(b + \lambda)$ aceita a palavra vazia, conforme
+    mostrado pela execução da função $\nu$ a seguir.
+    \[
+      \begin{array}{lc}
+        \nu(a^*(b + \lambda)) & = \\
+        \nu(a^*) \land \nu(b + \lambda) & = \\
+        \top \land (\nu(b) \lor \nu(\lambda)) & = \\
+        \top \land (\bot \lor \top) & = \\
+        \top
+      \end{array}
+    \]
+    Por sua vez, a expressão regular $(a + b)c^*$ não aceita a string vazia,
+    uma vez que $\nu((a + b)c^*) = \bot$, conforme apresentado a seguir.
+    \[
+      \begin{array}{lc}
+        \nu((a + b)c^*) & = \\
+        \nu(a + b) \land \nu(c^*) & = \\
+        (\nu(a) \lor \nu(b)) \land \top & = \\
+        (\bot \lor \bot) \land \top & = \\
+        \bot
+      \end{array}
+    \]
+  \end{Example}
+  
+  Utilizando a função $\nu$, podemos definir a função $\delta_a(e)$ que calcula
+  a derivada de uma expressão regular $e$ com respeito a um símbolo $a$.
+
+  \begin{Definition}[Derivada de uma expressão regular]
+    A função $\delta_a(e)$ calcula a derivada de uma expressão regular $e$
+    com respeito a um símbolo $a$ e é definida como:
+    \[
+      \begin{array}{lcl}
+        \delta_a(\emptyset) & = & \emptyset \\
+        \delta_a(\lambda)   & = & \lambda \\
+        \delta_a(b)         & = & \left\{  \begin{array}{ll}
+                                             \lambda   & \textit{se } a = b \\
+                                             \emptyset & \textit{caso contrário}\\ 
+                                           \end{array}\right. \\
+        \delta_a(e_1\,e_2)  & = & \left\{  \begin{array}{ll}
+                                             \delta_a(e_1)e_2 + \delta_a(e_2) &
+                                                                                \textit{se
+                                                                                }
+                                                                                \nu(e_1)
+                                                                                =
+                                                                                \top
+                                             \\
+                                             \delta_a(e_1)e_2 & \textit{caso contrário}\\
+                                           \end{array}\right. \\
+        \delta_a(e_1 + e_2) & = & \delta_a(e_1) + \delta_a(e_2) \\
+        \delta_a(e^*)  & = & \delta_a(e)e^*\\
+      \end{array}
+    \]
+  \end{Definition}
+
+  \begin{Example}
+    Considere a seguinte expressão regular $(ab)^*$. A seguir apresentamos o
+    cálculo de $\delta_a((ab)^*)$.
+    \[
+      \begin{array}{lc}
+      \delta_a((ab)^*) & = \\
+      \delta_a(ab)(ab)^* & = \\
+      \delta_a(a)b(ab)^* & = \\
+      \lambda b(ab)^* & = \\
+        b(ab)^* \\
+      \end{array}
+    \]
+    Note que $(ab)^*$ é o conjunto de palavras formadas por repetições de $ab$.
+    Logo, a derivada com repeito a $a$ de $(ab)^*$ é o conjunto de palavras
+    $b(ab)^*$, isto é palavras que começam com $b$, visto que o primeiro $a$ é
+    removido pela operação de derivada.
+
+    Por sua vez, $\delta_b((ab)^*) = \emptyset$, como pode ser observado pelo
+    cálculo a seguir.
+    \[
+      \begin{array}{lc}
+      \delta_b((ab)^*) & = \\
+      \delta_b(ab)(ab)^* & = \\
+      \delta_b(a)b(ab)^* & = \\
+      \emptyset b (ab)^* & = \\
+        \emptyset\\
+        \end{array}
+    \]  
+  \end{Example}
+
+  \subsection{Construindo um AFD utilizando derivadas}
+
+  A construção de um AFD a partir de uma expressão regular utilizando derivadas
+  consiste é explicado utilizando o exemplo a seguir.
+
+  \begin{Example}
+    Considere a seguinte expressão regular: $(ab)^*$. O AFD equivalente a essa
+    expressão pode ser construído usando derivadas da seguinte maneira.
+
+    Primeiramente, temos que o estado inicial do AFD corresponde a expressão
+    regular original.
+
+    \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state, initial](s0){$(ab)^*$} ;
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+
+    Agora, calculamos a derivada com respeito a cada símbolo do alfatebo para
+    a expressão regular do estado inicial. Como já mostramos nos exemplos
+    anteriores, essas são $\delta_a((ab)^*) = b(ab)^*$ e
+    $\delta_b((ab)^*) = \emptyset$. Deste resultado, obtemos duas novas
+    expressões regulares que serão incluídas como novos estados neste AFD.
+    Além disso, incluiremos transições do estado inicial para estes novos
+    estados usando o símbolo do alfabeto que foi utilizado no cálculo
+    da derivada.
+    \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state, initial](s0){$(ab)^*$} ;
+        \node[state, right of=s0](s1){$b(ab)^*$} ;
+        \node[state, below of=s0](s2){$\emptyset$} ;
+        \draw (s0) edge[above] node{$a$}(s1)
+              (s0) edge[left] node{$b$}(s2) ; 
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    Tendo realizado todas as transições sobre o estado correspondente a
+    $(ab)^*$, repetimos o processo para os outros estados. Evidentemente, o
+    resultado de $\delta_a(\emptyset) = \delta_b(\emptyset) = \emptyset$.
+    \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state, initial](s0){$(ab)^*$} ;
+        \node[state, right of=s0](s1){$b(ab)^*$} ;
+        \node[state, below of=s0](s2){$\emptyset$} ;
+        \draw (s0) edge[above] node{$a$}(s1)
+              (s0) edge[left] node{$b$}(s2) 
+              (s2) edge[loop left] node{$a,b$}(s2);
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    Para o estado $b(ab)^*$, temos que $\delta_a(b(ab)^*) = \emptyset$ e
+    $\delta_b(b(ab)^*) = (ab)^*$, o que nos faz incluir novas transições no AFD
+    anterior.
+    \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state, initial](s0){$(ab)^*$} ;
+        \node[state, right of=s0](s1){$b(ab)^*$} ;
+        \node[state, below of=s0](s2){$\emptyset$} ;
+        \draw (s0) edge[above, bend left] node{$a$}(s1)
+              (s0) edge[left] node{$b$}(s2) 
+              (s2) edge[loop left] node{$a,b$}(s2)
+              (s1) edge[below, bend left] node{$b$}(s0)
+              (s1) edge[above] node{$a$}(s2) ;
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    Como todos os estados possuem transiçõs para todos os símbolos do alfabeto,
+    temos que a construção do AFD está quase concluída. Falta apenas marcar os
+    estados finais que são aqueles cujas expressões regulares aceitam a palavra
+    vazia. Abaixo apresentamos a versão final do AFD para a expressão regular
+    $(ab)^*$.
+    \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state, initial, accepting](s0){$(ab)^*$} ;
+        \node[state, right of=s0](s1){$b(ab)^*$} ;
+        \node[state, below of=s0](s2){$\emptyset$} ;
+        \draw (s0) edge[above, bend left] node{$a$}(s1)
+              (s0) edge[left] node{$b$}(s2) 
+              (s2) edge[loop left] node{$a,b$}(s2)
+              (s1) edge[below, bend left] node{$b$}(s0)
+              (s1) edge[above] node{$a$}(s2) ;
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+  \end{Example}
+
+  \subsection{Casamento de padrão utilizando derivadas}
+
+  Podemos estender a noção de derivada para palavras ao invés de símbolos de um
+  alfabeto. A idéia é calcular a derivada para cada símbolo da palavra até que
+  todos sejam processados. Se ao final desse processo obtermos uma expressão
+  regular que aceita a palavra vazia, temos que a string processada pertence
+  a linguagem da expressão regular em questão.
+
+  A seguir apresentamos essa função.
+
+  \[
+    \begin{array}{lcl}
+      \delta^*(e,\lambda) & = & \nu(e) \\
+      \delta^*(e,ay)      & = & \delta^*(\delta_a(e), y) \\
+    \end{array}
+  \]
+
+  \begin{Example}
+    A palavra $abab$ pertence à linguagem da expressão regular $(ab)^*$,
+    conforme ilustrado pelo cálculo a seguir.
+    \[
+      \begin{array}{lc}
+        \delta^*((ab)^*,abab) & = \\
+        \delta^*(\delta_a((ab)^*),bab) & = \\
+        \delta^*(b(ab)^*,bab) & = \\
+        \delta^*(\delta_b(b(ab)^*),ab) & = \\
+        \delta^*((ab)^*,ab) & = \\
+        \delta^*(\delta_a((ab)^*),b) & = \\
+        \delta^*(b(ab)^*,b) & = \\
+        \delta^*(\delta_b(b(ab)^*),\lambda) & = \\
+        \delta^*((ab)^*,\lambda) & = \\
+        \nu((ab)^*) & = \\
+        \top
+      \end{array}
+    \]
+  \end{Example}
+  
+  \section{Exercícios} 
+
+  \begin{enumerate}
+     \item Usando o método baseado em derivadas, construa um AFD para $(00 + 1)^*01$.
+  \end{enumerate}
+\end{document}

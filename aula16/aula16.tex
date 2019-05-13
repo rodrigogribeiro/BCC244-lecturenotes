@@ -67,7 +67,7 @@
       \item $z = uvwxy$
       \item $|vwx| \leq k$
       \item $vx \neq \lambda$
-      \item $forall i. i \geq 0 \to uv^iwx^iy \in L$
+      \item $\forall i. i \geq 0 \to uv^iwx^iy \in L$
     \end{itemize}
   \end{Lemma}
 
@@ -106,7 +106,7 @@
       \item $z = uvwxy$
       \item $|vwx| \leq k$
       \item $vx \neq \lambda$
-      \item $forall i. i \geq 0 \to uv^iwx^iy \in L$
+      \item $\forall i. i \geq 0 \to uv^iwx^iy \in L$
     \end{itemize}
     Suponha que $0^k1^k2^k = uvwxy$, $|vwx| \leq k$ e que $vx \neq \lambda$.
     Considere os seguintes casos:
@@ -125,30 +125,13 @@
   \section{Exercícios} 
 
   \begin{enumerate}
-     \item Construa uma gramática equivalente na FNC.
-       \[
-         \begin{array}{l}
-           P \to BPA \,|\,A \\
-           A \to aA \,|\, \lambda\\
-           B \to Bba \,|\,\lambda\\
-         \end{array}
-       \]
-     \item Construa uma gramática equivalente na FNG
-       \[
-         \begin{array}{l}
-           P \to A \,|\,BC\\
-           A \to B \,|\, C\\
-           C \to cC \,|\, c\\
-         \end{array}
-       \]
-     \item Construa uma gramática equivalente na FNC.
-       O alfabeto para essa gramática é $\{0,1,2\}$.
-       \[
-         \begin{array}{l}
-           T \to 0\, |\, 1 \,|\, T\,T\,|\,2\,1\,T 
-         \end{array}
-       \]
-     \item Mostre como construir uma gramática na FNC a partir de uma gramática
-       na FNG.
+     \item Prove que as seguintes linguagens não são livres de contexto usando
+       o lema do bombeamento.
+       \begin{enumerate}
+          \item $\{ww\,|\,w \in\{0,1\}^*\}$.
+          \item $\{0^{n^2}\,|\,n\geq 0\}$.
+          \item $\{a^nb^kc^nd^k\,|\,n,k\geq 0\}$.
+          \item $\{a^nb^{2n}c^n\,|\,n\geq 0\}$.
+       \end{enumerate}
   \end{enumerate}
 \end{document}

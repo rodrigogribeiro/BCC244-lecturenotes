@@ -234,7 +234,9 @@
         $Y$ (isso não se aplica a variáveis introduzidas por eliminação de
         recursão à esquerda).
       \item Se existe uma regra $X \to Xy$, para $|y| \geq 1$, aplica-se 
-        a remoção de recursão à esquerda. 
+        a remoção de recursão à esquerda.
+      \item Se existir uma regra $X \to aw$ em que $w$ possui símbolos do
+        alfabeto, substituí-lo por uma variável.
     \end{enumerate}
   \end{proof}
 

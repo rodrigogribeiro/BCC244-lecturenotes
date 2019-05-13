@@ -1,0 +1,361 @@
+\documentclass[a4paper]{article}
+
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{proof,tikz}
+\usepackage{amssymb,amsthm,stmaryrd}
+
+
+\usepackage[edges]{forest}
+\usetikzlibrary{automata, positioning, arrows}
+
+
+\newtheorem{Lemma}{Lema}
+\newtheorem{Theorem}{Teorema}
+\theoremstyle{definition}
+\newtheorem{Example}{Exemplo}
+\newtheorem{Definition}{Definição}
+
+
+\usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \lhead{Teoria da Computação}
+  \rhead{Aula 18}
+  \lfoot{Prof. Rodrigo Ribeiro}
+  \rfoot{\thepage}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \pagestyle{fancy}
+
+\tikzset{
+        ->,  % makes the edges directed
+        >=stealth', % makes the arrow heads bold
+        node distance=3cm,
+        every state/.style={thick, fill=gray!10},
+        initial text=$\,$
+        }
+  
+
+\begin{document}
+
+\title{Aula 18 - Introdução às Máquinas de Turing}
+  \author{Rodrigo Ribeiro}
+
+  \maketitle
+
+
+  \pagestyle{fancy}
+
+
+  \section*{Objetivos}
+
+  \begin{itemize}
+     \item Apresentar o conceito de máquina de Turing.
+     \item Apresentar os conceitos de linguagens recursivas
+       e recursivamente enumeráveis.
+     \item Apresentar os conceitos de aceitação por parada em
+           estado final e por parada.
+  \end{itemize}
+
+  \section{Introdução}
+
+  Conforme apresentado em aulas passadas, linguagens regulares e livres de
+  contexto não são capazes de representar a estrutura de linguagens muito
+  simples, como por exemplo, $\{0^n1^n2^n\,|\,n\geq 0\}$. Nesta aula
+  apresentaremos as máquinas de Turing (MT), um modelo matemático de máquina
+  proposta por Alan Turing na década de 30. As MTs são tão
+  expressivas, que até hoje não se conhece um formalismo mais poderoso.
+
+  Ao contrário das máquinas que vimos até o presente momento, a MT
+  permite sobreescrever a palavra de entrada. Esse fato aliado a
+  uma memória infinita proporciona maior expressividade que os autômatos de
+  pilha. Em MTs consideramos que o próximo símbolo a ser
+  processado é o que está sobre o \emph{cabeçote}, que pode mover para a
+  direita ou esquerda durante transições. O conteúdo da fita de uma MT é
+  da forma $\langle w \sqcup^*$, em que $\langle$ é o marcador de início de fita
+  e $\sqcup$ é o símbolo de ``branco'', que preenche todas as posições da fita
+  de uma MT após o fim da palavra de entrada. Note que se a MT inicia com a
+  palavra $\lambda$ ela será da forma $\langle \sqcup^*$.
+
+  Abaixo, apresentamos o formato geral de uma transição em uma máquina de Turing:
+  \begin{figure}[H]
+    \begin{tikzpicture}[node distance=3cm]
+      \node[state](s0){$A$};
+      \node[state, right of=s0](s1){$B$};
+      \draw (s0)edge[above]node{$a/b\,d$}(s1);
+    \end{tikzpicture}
+    \centering
+  \end{figure}
+  A transição acima pode ser descrita formalmente como $\delta(A,a) = [B,b,d]$,
+  em que $d \in \{D,E\}$ e, pode ser entendida como: a máquina estando no estado
+  $A$ com símbolo sobre o cabeçote $a$, escreve $b$ na posição atual e move o
+  cabeçote na direção $d$.
+
+  A MT utiliza uma fita, infinita à direita, possuindo células capazes de
+  armazenar um símbolo de alfabeto cada. No próximo exemplo, apresentaremos
+  uma MT simples e ilustraremos como a computação funciona nesse tipo de
+  máquina.
+
+  \begin{Example}
+    Considere o seguinte diagrama de estados para uma MT que calcula a operação
+    de not bit-a-bit.
+    \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state, initial](s0){$A$} ;
+        \node[state, right of=s0](s1){$B$};
+        \node[state, right of=s1](s2){$C$};
+        \draw (s0) edge[loop above]node{$\begin{array}{c}0/1\:D\\1/0\:D\\\end{array}$}(s0)
+              (s0) edge[above]node{$\sqcup/\sqcup\:E$}(s1)
+              (s1) edge[loop above]node{$\begin{array}{c}0/0\:E\\1/1\:E\\\end{array}$}(s1)
+              (s1) edge[above]node{$\langle / \langle\: D$} (s2);
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    Para exemplificar o funcionamento desta MT, vamos utilizar a noção de
+    configuração instântanea, que consiste de um par formado pelo estado atual e
+    pelo conteúdo da fita. Vamos mostrar o processamento desta MT sobre a
+    palavra $0011$:
+    \[
+      \begin{array}{lcl}
+        \lbrack A,\langle \underline{0}011 \rbrack & \vdash & \{\delta(A,0) =
+                                                              [A,1,D]\}\\
+        \lbrack A, \langle 1 \underline{0}11 \rbrack & \vdash & \{\delta(A,0) =
+                                                                [A,1,D]\} \\
+        \lbrack A, \langle  11 \underline{1}1 \rbrack & \vdash & \{\delta(A,1) =
+                                                                 [A,0,D]\} \\
+        \lbrack A, \langle  110\underline{1}\rbrack & \vdash & \{\delta(A,1) =
+                                                               [A,0,D]\} \\
+        \lbrack A , \langle 1100 \underline{\sqcup} \rbrack & \vdash &
+                                                              \{\delta(A,\sqcup)
+                                                              = [B,\sqcup, E]\}\\
+        \lbrack B, \langle 110\underline{0} \rbrack & \vdash & \{\delta(B,0) =
+                                                               [B,0, E]\} \\
+        \lbrack B, \langle 11\underline{0}0 \rbrack & \vdash & \{\delta(B,0) =
+                                                               [B,0, E]\} \\
+        \lbrack B, \langle 1\underline{1}00 \rbrack & \vdash & \{\delta(B,1) =
+                                                               [B,1, E]\} \\
+        \lbrack B, \langle \underline{1}100 \rbrack & \vdash & \{\delta(B,1) =
+                                                               [B,1, E]\} \\
+        \lbrack B, \langle \underline{\langle}1100 \rbrack & \vdash & \{\delta(B,\langle) =
+                                                               [C,\langle, D]\}
+        \\
+        \lbrack C , \langle  \underline{1}100 \rbrack & &
+      \end{array}
+    \]
+    Com isso, a MT pára contendo $1100$ que é o resultado do not bit-a-bit de
+    $0011$, que era a palavra original de entrada. Note que, como o objetivo
+    desta MT não é a aceitação de uma palavra, não faz sentido possuir estados
+    finais. O próximo exemplo ilustra uma MT que aceita uma linguagem.
+ \end{Example}
+
+ \begin{Example}
+   A seguinte MT aceita a linguagem regular $0(0+1)^*$:
+    \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state, initial](s0){$A$} ;
+        \node[state, accepting, right of=s0](s1){$B$};
+        \draw (s0) edge[above]node{$0/ 0\:D$}(s1) ;
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    Essa MT apresenta uma característica importante: uma MT não precisa processar
+    uma palavra inteira para aceitar uma palavra. Note que se a palavra não inicia
+    com o símbolo $0$, a MT permanece no estado inicial $A$, que é não final.
+    Caso inicie com $0$, a MT faz a transição para o estado $B$ e pára (pois
+    este não possui transições) em estado final.
+    Dizemos que uma MT aceita uma palavra por parada em estado final se o
+    processamento de uma palavra faz com que a MT pare em um estado final.
+
+    Considere, agora outra MT que aceita a mesma linguagem usando outro critério
+    de aceitação:
+    \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state, initial](s0){$A$} ;
+        \node[state, right of=s0](s1){$B$};
+        \draw (s0) edge[above, bend left]node{$\begin{array}{l}1 / 1 \: D\\ \sqcup / \sqcup\: D \end{array}$}(s1)
+              (s1) edge[below, bend left]node{$\begin{array}{l}1 / 1 \: E\\ 0/ 0\: E\\ \sqcup / \sqcup\: E \end{array}$} (s0) ;
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+
+    Observe que essa MT entra em loop para qualquer palavra que não inicia com
+    $0$. Dizemos que uma MT aceita uma palavra por parada se o processamento da
+    MT pára em algum estado e a recusa se a MT entra em loop. Logo, a MT
+    anterior, aceita $0(0+1)^*$ por parada.
+ \end{Example}
+
+ \section{Máquinas de Turing}
+
+ Segue a definição formal de uma MT.
+ 
+ \begin{Definition}[Máquina de Turing]
+   Uma MT $M = (E,\Sigma,\Gamma,\langle, \sqcup, \delta, i, F)$ é uma óctupla,
+   em que:
+   \begin{itemize}
+      \item $E$: conjunto de estados.
+      \item $\Sigma$: alfabeto de entrada.
+      \item $\Gamma$: alfabeto de fita.
+      \item $\langle \in \Gamma - (\{\sqcup\} \cup \Sigma)$: marcador de início
+        de fita.
+      \item $\sqcup \in \Gamma - (\{\langle\} \cup \Sigma)$: símbolo de branco.
+      \item $\delta : E \times \Gamma \to E \times \Gamma \times \{E,D\}$,
+        função de transição. Uma função parcial.
+      \item $i \in E$: estado inicial.
+      \item $F\subseteq E$: conjunto de estados finais.
+    \end{itemize}
+    Uma MT que segue essa definição é dita ser uma MT padrão. 
+ \end{Definition}
+
+ \begin{Example}
+   Para ilustrar a definição acima, vamos considerar novamente a MT que aceita
+   $0(0+1)^*$:
+    \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state, initial](s0){$A$} ;
+        \node[state, accepting, right of=s0](s1){$B$};
+        \draw (s0) edge[above]node{$0/ 0\:D$}(s1) ;
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    Temos que:
+    \begin{itemize}
+      \item $E =\{A,B\}$
+      \item $\Sigma =\{0,1\}$
+      \item $\Gamma = \{\langle, \sqcup, 0, 1\}$
+      \item A função de transição é formada por uma única equação $\delta(A,0) =
+        [B,0,D]$.
+      \item $i = A$
+      \item $F =\{B\}$
+    \end{itemize}   
+ \end{Example}
+
+ \section{Linguagem aceita por MT padrão}
+ 
+  Para definir a linguagem aceita por uma MT, é necessário uma função que
+  elimina os símbolos de branco presentes à direita da palavra de entrada na
+  fita. A função $\pi : \Gamma^* \to \Gamma^*$ é definida como:
+  \[
+    \pi(w) =\left\{  \begin{array}{ll}
+                       \lambda & \textit{se } w \in \{\sqcup\}^*\\
+                       xa      & \textit{se } w=xay \land a \neq \sqcup \land y \in \{\sqcup\}^*\\
+                     \end{array}
+             \right.
+  \]
+
+  
+  Usando a função $\pi$, podemos definir a relação de transição entre
+  configurações instantâneas de uma MT.
+
+  \begin{Definition}[Transição entre configurações intantâneas]
+    Seja $M = (E,\Sigma,\Gamma, \langle, \sqcup, \delta, i, F)$ uma MT. A
+    relação $\vdash \subseteq (E \times \Gamma^+)^2$, para $M$, é tal que
+    para todo $e \in E$ e $a \in \Gamma$:
+    \begin{enumerate}
+      \item Se $\delta(e,a) = [e',b,D]$ então $[e,x\underline{a}cy] \vdash
+        [e',xb\underline{c}y]$ para $c \in \Gamma$ e,
+        $[e,x\underline{a}]\vdash[e',xb\underline{\sqcup}]$;
+      \item Se $\delta(e,a) = [e',b,E]$ então $[e,xc\underline{a}y] \vdash [e',
+        x\underline{c}\pi(by)]$ para $c \in \Gamma$ ;
+      \item Se $\delta(e,a)$ é indefinido então não existe $f$ tal eque
+        $[e,x\underline{a}y] \vdash f$.
+    \end{enumerate}
+    Como usual, $\vdash^*$ denotará o fecho reflexivo e transitivo de $\vdash$.  
+  \end{Definition}
+
+  \begin{Definition}[Linguagem aceita por parada em estado final]
+    Seja $M = (E,\Sigma,\Gamma,\langle, \sqcup, \delta, i, F)$ um MT. A
+    linguagem aceita por $M$ por parada em estado final é:
+    \[
+      L(M) = \{w \in \Sigma^*\,|\,[i,\langle w] \vdash^* [e', x\underline{a}y],
+      \delta(e,a) = \bot \land e' \in F\}
+    \]
+    A notação $\delta(e,a) = \bot$ representa que a transição $\delta(e,a)$ é
+    indefinida, isto é, que a MT pára.
+  \end{Definition}
+
+  \begin{Definition}[Linguagem recursivamente enumerável]
+    Dizemos que $L \subseteq \Sigma^*$ é uma linguagem recursivamente enumerável (LRE)
+    se existe uma MT que a reconhece.
+  \end{Definition}
+
+  \begin{Definition}[Linguagem recursiva]
+    Dizemos que $L \subseteq \Sigma^*$ é uma linguagem recursiva (LRec) se
+    existe uma MT que a reconhece e pare para todas as palavras do alfabeto de entrada.
+  \end{Definition}
+
+  \begin{Definition}[Linguagem aceita por estado final]
+    Seja $M = (E,\Sigma,\Gamma,\langle, \sqcup, \delta, i, F)$ um MT. A
+    linguagem aceita por $M$ por estado final é:
+    \[
+      L_F(M) = \{w \in \Sigma^*\,|\,[i,\langle w] \vdash^* [e', x\underline{a}y]
+      \land e' \in F\}
+    \]
+    Note que nesse critério de reconhecimento basta existir um único estado
+    final e este não deve possuir transições.
+  \end{Definition}
+
+  \begin{Definition}[Linguagem aceita por parada]
+    Seja $M = (E,\Sigma,\Gamma,\langle, \sqcup, \delta, i)$ um MT. A
+    linguagem aceita por $M$ por parada é:
+    \[
+      L_P(M) = \{w \in \Sigma^*\,|\,[i,\langle w] \vdash^* [e', x\underline{a}y],
+      \delta(e,a) = \bot \}
+    \]
+  \end{Definition}
+
+  Todos esses 3 critérios de aceitação são equivalentes entre si, conforme
+  mostrado pelo teorema a seguir.
+
+  \begin{Theorem}
+    Seja $L$ uma linguagem. As seguintes afirmativas
+    são equivalentes:
+    \begin{enumerate}
+       \item $L$ é uma linguagem recursivamente enumerável.
+       \item $L$ pode ser reconhecida por uma MT que aceita por estado final.
+       \item $L$ pode ser reconhecida por uma MT que aceita por parada.
+    \end{enumerate}
+  \end{Theorem}
+  \begin{proof}$\:$\\
+    $1 \to 2)$: Suponha que $L$ é uma LRE. Se $L$ é uma LRE, existe uma MT
+    $M = (E,\Sigma, \Gamma, \langle, \sqcup, \delta, i, F)$ tal que $L(M) = L$.
+    Seja $f \not\in E$ um novo estado. A MT $M' = (E \cup \{f\}, \Sigma, \Gamma,
+    \langle, \sqcup, \delta',i, \{f\})$, em que $\delta'$ é definida como:
+    \begin{itemize}
+      \item Se $\delta(e,a)$ é definido, então $\delta'(e,a) = \delta(e,a)$.
+      \item Para todo $(e,a) \in F \times \Gamma$, se $\delta(e,a) = \bot$,
+        então $\delta'(e,a) = [f, a, D]$.
+      \item Para todo $(e,a) \in (E - F) \times \Gamma$, se $\delta(e,a) =
+        \bot$, então $\delta'(e,a) = \bot$.
+      \item Para todo $a \in \Gamma$, $\delta'(f, a) = \bot$.
+    \end{itemize}
+    $2 \to 3)$: Suponha que $L$ pode ser reconhecida por uma MT que aceita por
+    estado final e seja $M = (E,\Sigma, \Gamma, \langle, \sqcup, \delta, i, F)$
+    tal MT. A MT $M' = (E\cup \{l\},\Sigma,\Gamma,\langle, \sqcup, \delta',i)$,
+    $l\not\in E$ é equivalente a $M$, e aceita por parada, em que $\delta'$ é
+    definida como:
+    \begin{itemize}
+      \item para todo $(e,a) \in (E - F) \times \Gamma$, se $\delta(e,a)$ é
+        definido, temos que $\delta'(e,a) = \delta(e,a)$. Se $\delta(e,a) =
+        \bot$, então $\delta'(e,a) = [l,a,D]$.
+      \item Para todo $a\in \Gamma$, $\delta'(l,a) = [l,a,D]$.
+      \item Para todo $(e,a) \in F \times \Gamma$, $\delta'(e,a) = \bot$. 
+    \end{itemize}
+    $3 \to 1)$: Seja $M = (E,\Sigma, \Gamma, \langle, \sqcup, \delta, i)$ uma MT
+    que aceita $L$ por parada. A MT $M' = (E,\Sigma, \Gamma, \langle, \sqcup,
+    \delta, i, E)$ aceita $L$ por parada em estado final.
+  \end{proof}
+  
+  \section{Exercícios}
+
+  \begin{enumerate}
+     \item Construa uma MT padrão que aceita a linguagem $\{0^{2n}\,|\,n\geq
+       0\}$.
+     \item Construa uma MT padrão que aceita a linguagem $\{a^nb^n\,|\,n\geq
+       0\}$.
+     \item Utilize o Teorema 1 para construir MTs que aceitem por parada as
+       linguagens dos exercícios 1 e 2.
+  \end{enumerate}
+\end{document}

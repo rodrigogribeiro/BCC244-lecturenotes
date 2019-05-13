@@ -1,0 +1,174 @@
+\documentclass[a4paper]{article}
+
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{proof,tikz}
+\usepackage{amssymb,amsthm,stmaryrd, amsmath}
+
+
+\usepackage[edges]{forest}
+\usetikzlibrary{automata, positioning, arrows}
+
+
+\newtheorem{Lemma}{Lema}
+\newtheorem{Theorem}{Teorema}
+\theoremstyle{definition}
+\newtheorem{Example}{Exemplo}
+\newtheorem{Definition}{Definição}
+
+
+\usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \lhead{Teoria da Computação}
+  \rhead{Aula 17}
+  \lfoot{Prof. Rodrigo Ribeiro}
+  \rfoot{\thepage}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \pagestyle{fancy}
+
+\tikzset{
+        -,  % makes the edges directed
+        >=stealth', % makes the arrow heads bold
+        node distance=3cm,
+        every state/.style={thick, fill=gray!10},
+        initial text=$\,$
+        }
+  
+
+\begin{document}
+
+  \title{Aula 17 - Propriedades de fechamento e problemas de decisão para
+    linguagens livres de contexto}
+  \author{Rodrigo Ribeiro}
+
+  \maketitle
+
+
+  \pagestyle{fancy}
+
+
+  \section*{Objetivos}
+
+  \begin{itemize}
+     \item Demonstrar que as linguagens livres de contexto são fechadas sobre
+       união, fecho de Kleene, concatenação e interseção com linguagens regulares.
+     \item Apresentar alguns problemas de decisão para linguagens livres de
+       contexto.
+     \item Aplicar propriedades de fechamento para construção de gramáticas e
+       demonstração de que linguagens não são livres de contexto.
+  \end{itemize}
+
+  \section{Propriedades de fechamento para LLCs}
+
+  \begin{Theorem}
+    A classe das linguagens livres de contexto é fechada sobre união, fecho de
+    Kleene e concatenação.
+  \end{Theorem}
+
+  \begin{proof}
+    Sejam $G_1 = (V_1,\Sigma,R_1,P_1)$ e $G_2 = (V_2,\Sigma,R_2,P_2)$ duas GLCs.
+    \begin{itemize}
+      \item A GLC $G_3 = (V_1 \cup V_2 \cup \{P_3\}, \Sigma, R_1 \cup R_2 \cup
+        \{P_3 \to P_1\,|\,P_2\})$ gera $L(G_1) \cup L(G_2)$.
+      \item A GLC $G_3 = (V_1 \cup V_2 \cup \{P_3\}, \Sigma, R_1 \cup R_2 \cup
+        \{P_3 \to P_1\,P_2\})$ gera $L(G_1) \,L(G_2)$.
+      \item A GLC $G_3 = (V_1 \cup \{P_3\}, \Sigma, R_1 \cup 
+        \{P_3 \to P_1\,P_3\,|\,\lambda\})$ gera $L(G_1)^*$.
+    \end{itemize}
+  \end{proof}
+
+  \begin{Example}
+    Vamos considerar a linguagem $\{0^k1^k2^n\,|\,n,k\geq 0\}$. Vamos usar
+    propriedades de fechamento para construir uma GLC para essa linguagem.
+    Primeiramente, considere a seguinte GLC para $\{0^k1^k\,|\,k\geq 0\}$:
+    \[
+      P_1 \to 0P_11 \,|\, \lambda
+    \]
+    A seguinte gramática gera $\{2^n\,|\, n \geq 0\}$:
+    \[
+      P_2 \to 2P_2 \,|\, \lambda
+    \]
+    Note que $\{0^k1^k2^n\,|\,n,k\geq 0\}$ é a concatenação de
+    $\{0^k1^k\,|\,k\geq 0\}$ com a linguagem $\{2^n\,|\, n \geq 0\}$. Logo,
+    Usando as propriedades de fechamento, a gramática para
+    $\{0^k1^k2^n\,|\,n,k\geq 0\}$ é:
+    \[
+      \begin{array}{l}
+        P_3 \to P_1\,P_2\\
+        P_1 \to 0P_11 \,|\, \lambda\\
+        P_2 \to 2P_2 \,|\, \lambda
+      \end{array}
+    \]
+  \end{Example}
+
+  \begin{Theorem}
+    A classe das linguagens livres de contexto não é fechada sobre a
+    complementação e interseção.
+  \end{Theorem}
+  \begin{proof}
+    Sejam $L_1 = \{0^n1^n2^k\,|\,n,k\geq 0\}$ e $L_2 = \{0^k1^n2^n\,|\,n,k\geq
+    0\}$ duas LLCs. Temos que $L_1 \cap L_2 = \{0^n1^n2^n\,|\,n\geq 0\}$ que não
+    é uma LLC. Logo, as LLCs não são fechadas sobre a interseção. Da teoria de
+    conjunto sabemos que $A \cap B = \overline{\overline{A} \cup \overline{B}}$.
+    Como as LLCs são fechadas sobre a união, se as LLCs fossem fechadas sobre a
+    complementação elas também seriam sobre a interseção. Logo, as LLCs não são
+    fechadas sobre a complementação.
+  \end{proof}
+
+  \begin{Theorem}
+    Sejam $L$ uma linguagem livre de contexto e $R$ uma linguagem regular.
+    Então, $L \cap R$ é uma linguagem livre de contexto.
+  \end{Theorem}
+  \begin{proof}
+    Sejam $M_1 = (E_1,\Sigma,\Gamma, \delta_1, I_1,F_1)$ um APN para $L$ e
+    $M_2 = (E_2,\Sigma,\delta_2,i_2,F_2)$ um AFD para $R$. Um APN para $L\cap R$ é
+    $M_3 = (E_3,\Sigma,\Gamma, \delta_2,I_3,F_3)$, em que:
+    \begin{itemize}
+       \item $E_3 = E_1 \times E_2$
+       \item $I_3 = I_1 \times \{i_2\}$
+       \item $F_3 = F_1 \times F_2$
+       \item para cada par de transições $[e'_1,z] \in \delta_1(e_1,a,A)$ e
+         $\delta_2(e_2,a) = e'_2$, em que $e_1,e'_1 \in E_1$, $e_2,e'_2\in E_2$
+         e $a\in \Gamma \cup \{\lambda\}$ e $z \in \Gamma^*$, há uma transição
+         $[(e'_1,e'_2),z] \in \delta_3((e_1,e_2),a,A)$ e para cada transição
+         $\lambda$ $[e'_1,z] \in \delta_1(e_1,\lambda,A)$ há transições
+         $[(e'_1,e_2),z] \in \delta_3((e_1,e_2),\lambda,A)$ para cada
+         $e_2 \in E_2$.
+    \end{itemize}
+  \end{proof}
+
+  \section{Problemas de decisão para LLCs}
+
+  O seguintes problemas são decidíveis para LLCs
+  \begin{itemize}
+    \item Dados uma palavra $w$ e uma LLC $L$, determinar se $w \in L$?
+    \item Determinar se a linguagem gerada por  uma gramática é vazia.  
+  \end{itemize}
+
+  O primeiro consiste em determinar se $w \in L(G)$, em que $G$ é uma GLC para
+  $L$ e o segundo pode ser resolvido verificando se o símbolo de partida da
+  gramática em questão é inútil.
+
+  Diversos problemas envolvendo GLCs são indecidíveis. Esse assunto será
+  estudado posteriormente na disciplina.
+  
+  \section{Exercícios} 
+
+  \begin{enumerate}
+     \item Construa gramáticas para as seguintes linguagens.
+       \begin{enumerate}
+          \item $L_1 = \{a^mb^n\,|\, n \neq m\}$.
+          \item $L_2 = \{a^{m + n}b^mc^n\,|\, m\textit{ é par e }n\textit{ é
+              ímpar}\}$.
+          \item $L_1L_2 \cup L_1^*$.
+       \end{enumerate}
+     \item Mostre que as seguintes linguagens são livres de contexto.
+       \begin{enumerate}
+         \item
+       \end{enumerate}
+  \end{enumerate}
+\end{document}

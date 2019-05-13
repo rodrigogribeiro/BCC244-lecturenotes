@@ -108,6 +108,22 @@
 
   \subsection{Construindo uma GLC a partir de um AP}
 
+  Seja $M = (E,\Sigma,\Gamma,I,F)$ um APN qualquer, $e,e' \in E$ e
+  $X \in \Gamma \cup \{\lambda\}$. Denote por $C(e,X,e')$ o conjunto
+  de palavras $w \in \Sigma^*$ em que $M$ começando em $e$, com pilha
+  contendo $X$ termina em $e'$ com pilha vazia, isto é:
+  \[
+    C(e,X,e') =\{w \in \Sigma^*\,|\,[e,w,X]\vdash^*[e',\lambda,\lambda]\}
+  \]
+  Note que $L(M) = \bigcup_{(i,f) \in I \times F} C(i,\lambda,f)$.
+
+  Suponha que seja possível construir uma GLC que gere todas as palavras em
+  $C(e,X,e')$ usando, como símbolo de partida, $[e,X,e']$. Dessa forma,
+  o problema de obter uma GLC equivalente a um AP consiste em gerar regras
+  para a variável $[i,\lambda,f]$, para cada $i \in I, f\in F$. O próximo
+  teorema dá os detalhes dessa construção.
+
+  
   \begin{Theorem}\label{thmglcap}
     Para cada AP $M$, existe uma GLC que gera $L(M)$.
   \end{Theorem}
@@ -128,22 +144,88 @@
                  $d \in E$.
                \item Se $z\neq \lambda$, $[e,A,d] \to a[e', B_1,
                  d_1]...[d_{n-1},B_n,d_n]$, em que $z = B_1...B_n$ e
-                 $d_1,...,d_n \in E$.
+                 $(d_1,...,d_n) \in E^n$.
                \item Se $A = \lambda$, adicionamente temos as seguintes regras:
                  \begin{itemize}
                    \item Se $z = \lambda$, $[e,C,d] \to a[e',C,d]$, para cada $C \in \Gamma$ e
                      cada $d \in E$.
                    \item Se $z \neq \lambda$, $[e,C,d] \to a[e',B_1,d_1]...[d_{n
                        - 1},B_n,d_n][d_n,C,d_{n + 1}]$ para cada $C \in \Gamma$ e
-                    cada $d_1,...,d_{n+1} \in E$.
+                    cada $(d_1,...,d_{n+1}) \in E^{n+1}$.
                  \end{itemize}
              \end{itemize}
         \end{itemize}
     \end{itemize}
   \end{proof}
 
+  A construção de um GLC usando o teorema anterior irá produzir muitas variáveis
+  inúteis. Podemos minimizar esse efeito seguindo as seguintes recomendações:
+  \begin{enumerate}
+    \item Começando com as regras de $P$, gerar apenas variáveis alcançáveis por
+      $P$.
+    \item Se não há caminho de $e$ para $e'$ no AP $M$, variáveis $[e,X,e']$ são
+      inúteis.
+    \item Se toda computação de $e$ para $e'$ só aumenta a pilha, então
+      variáveis $[e,X,e']$ são inúteis.
+  \end{enumerate}
+  
   \begin{Example}
     Para ilustrar a construção de uma gramática equivalente a um APN, considere o seguinte AP:
+    \begin{figure}[H]
+      \begin{tikzpicture}
+        \node[state,initial,accepting](i){$i$};
+        \node[state,accepting, right of=i](f){$f$};
+        \draw (i)edge[loop above]node{$a,\lambda/B$}(i)
+        (i)edge[above]node{$b,B/C$}(f)
+        (f)edge[loop above]node{$\begin{array}{l}b, B/C\\ c, C/\lambda \end{array}$}(f);
+      \end{tikzpicture}
+      \centering
+    \end{figure}
+    Seguinte a construção especificada no teorema~\ref{thmglcap}, obtemos as
+    seguintes regras:
+    \[
+      \begin{array}{l}
+        P \to \lbrack 0,\lambda,0 \rbrack \,|\,\lbrack 0,\lambda,1 \rbrack\\
+        \lbrack 0,\lambda,0 \rbrack \to \lambda \\
+        \lbrack 1,\lambda,1 \rbrack \to \lambda \\
+      \end{array}
+    \]
+    A partir da transição, $\delta(0,a,\lambda) = [0,B]$, temos:
+    \[
+      \begin{array}{l}
+        \lbrack 0,\lambda,0 \rbrack \to a[0,B,0]\\
+        \lbrack 0,\lambda,1 \rbrack \to a[0,B,1]\\
+        \lbrack 0,B,1 \rbrack \to a\lbrack 0,B,0\rbrack \lbrack
+        0,B,1\rbrack\,|\,a\lbrack 0,B,1\rbrack \lbrack 1,B,1\rbrack\\
+      \end{array}
+    \]
+    A partir da transição $\delta(0,b,B) = [1,C]$, obtemos:
+    \[
+      \begin{array}{l}
+        \lbrack 0,B,1\rbrack \to b\lbrack 1,\lambda,1\rbrack\\
+      \end{array}
+    \]
+    Finalmente, a transição $\delta(1,b,B) = [1,C]$ gera as seguintes regras:
+    \[
+      \begin{array}{l}
+        \lbrack 1,B,1\rbrack \to b\lbrack 1,\lambda,1\rbrack \\
+        \lbrack 1,C,1\rbrack  \to c\lbrack 1,\lambda,1\rbrack\\
+      \end{array}
+    \]
+  \end{Example}
+  
+  \section{Exercícios} 
+
+  \begin{enumerate}
+     \item Construa um APN equivalente a gramática a seguir.
+       \[
+         \begin{array}{l}
+           P \to BPA \,|\,A \\
+           A \to aA \,|\, \lambda\\
+           B \to Bba \,|\,\lambda\\
+         \end{array}
+       \]
+     \item Construa a gramática equivalente ao seguinte AP:
     \begin{figure}[H]
       \begin{tikzpicture}
         \node[state,initial,accepting](i){$i$};
@@ -154,53 +236,5 @@
       \end{tikzpicture}
       \centering
     \end{figure}
-    De acordo com a construção apresentada no Teorema \ref{thmglcap},
-    inicialmente criamos as seguintes regras:
-    \[
-      \begin{array}{l}
-        P \to \lbrack i, \lambda,i \rbrack \,|\, \lbrack i, \lambda,f \rbrack\\
-        \lbrack i, \lambda,i \rbrack \to \lambda \\
-        \lbrack f, \lambda,f \rbrack \to \lambda \\
-      \end{array}
-    \]
-    Para a transição $\delta(i,0,\lambda) = [i,X]$ temos as seguintes regras:
-    \[
-      \begin{array}{l}
-        \lbrack i, \lambda, i \rbrack \to 0 \lbrack i , X , i \rbrack \,|\, 0
-        \lbrack i , X , f \rbrack \\
-        \lbrack i, X , f \rbrack \to 0 \lbrack i, X ,i \rbrack \lbrack i, X , f
-        \rbrack \,|\, 0 \lbrack i , X , f \rbrack\lbrack i, X , f \rbrack\\
-      \end{array}
-    \]
-  \end{Example}
-  
-  \section{Exercícios} 
-
-  \begin{enumerate}
-     \item Construa uma gramática equivalente na FNC.
-       \[
-         \begin{array}{l}
-           P \to BPA \,|\,A \\
-           A \to aA \,|\, \lambda\\
-           B \to Bba \,|\,\lambda\\
-         \end{array}
-       \]
-     \item Construa uma gramática equivalente na FNG
-       \[
-         \begin{array}{l}
-           P \to A \,|\,BC\\
-           A \to B \,|\, C\\
-           C \to cC \,|\, c\\
-         \end{array}
-       \]
-     \item Construa uma gramática equivalente na FNC.
-       O alfabeto para essa gramática é $\{0,1,2\}$.
-       \[
-         \begin{array}{l}
-           T \to 0\, |\, 1 \,|\, T\,T\,|\,2\,1\,T 
-         \end{array}
-       \]
-     \item Mostre como construir uma gramática na FNC a partir de uma gramática
-       na FNG.
   \end{enumerate}
 \end{document}

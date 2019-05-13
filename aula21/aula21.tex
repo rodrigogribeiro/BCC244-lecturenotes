@@ -1,0 +1,265 @@
+\documentclass[a4paper]{article}
+
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{proof,tikz}
+\usepackage{algorithm2e}
+\usepackage{amssymb,amsthm,stmaryrd}
+
+
+\usepackage[edges]{forest}
+\usetikzlibrary{automata, positioning, arrows}
+
+
+\newtheorem{Lemma}{Lema}
+\newtheorem{Theorem}{Teorema}
+\theoremstyle{definition}
+\newtheorem{Example}{Exemplo}
+\newtheorem{Definition}{Definição}
+
+
+\usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \lhead{Teoria da Computação}
+  \rhead{Aula 21}
+  \lfoot{Prof. Rodrigo Ribeiro}
+  \rfoot{\thepage}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \pagestyle{fancy}
+
+\tikzset{
+        ->,  % makes the edges directed
+        >=stealth', % makes the arrow heads bold
+        node distance=3cm,
+        every state/.style={thick, fill=gray!10},
+        initial text=$\,$
+        }
+  
+
+\begin{document}
+
+\title{Aula 21 - Conjuntos Enumeráveis e o Teorema de Cantor}
+  \author{Rodrigo Ribeiro}
+
+  \maketitle
+
+  \pagestyle{fancy}
+
+
+  \section*{Objetivos}
+
+  \begin{itemize}
+     \item Apresentar os conceito de conjunto enumerável e alguns
+       exemplos.
+     \item Apresentar o Teorema de Cantor e sua aplicação para
+       mostrar que alguns conjuntos não são enumeráveis.
+     \item Discutir a relação entre o Teorema de Cantor e a
+       decidibilidade de problemas.
+  \end{itemize}
+
+  \section{Uma pequena revisão sobre funções}
+
+  Nesta aula faremos uso de diversos conceitos vistos anteriormente por vocês.
+  Apresentaremos as definições necessárias de maneira breve.
+
+  \begin{Definition}
+    Sejam $A,B$ conjuntos quaisquer. Dizemos que $f \subseteq A \times B$ é uma
+    função se $\forall x. x \in A \to \exists ! y . y \in B \land (x,y) \in f$.
+    Usamos a notação $f : A \to B$ para representar o fato de que $f \subseteq
+    A\times B$ é uma função. Usamos a notação $f(x) = y$ para representar
+    $(x,y) \in f$.
+  \end{Definition}
+
+  \begin{Definition}
+    Seja $f : A\to B$ uma função. Dizemos que $f$ é uma função injetora se
+    \[
+      \forall a_1.\forall a_2.  a_1 \in A \land a_2 \in A \to f(a_1) = f(a_2)
+      \to a_1 = a_2
+    \]
+  \end{Definition}
+
+  \begin{Definition}
+    Seja $f : A\to B$ uma função. Dizemos que $f$ é uma função sobrejetora se
+    \[
+      \forall y . y \in B \to \exists x. x \in A \land f(x) = y.
+    \]
+  \end{Definition}
+
+  
+  
+  \section{Conjuntos enumeráveis}
+
+  \begin{Definition}[Conjuntos de mesma cardinalidade]
+    Sejam $A$ e $B$ dois conjuntos quaisquer. Dizemos que $A$ e $B$ possuem
+    a mesma cardinalidade, $A \sim B$, se existe uma função bijetora $f : A \to B$.
+  \end{Definition}
+
+  Usando a definição de conjuntos de mesma cardinalidade, podemos definir
+  o conceito de conjunto infinito e finito.
+
+  \begin{Definition}[Conjuntos finitos e infinitos]
+    Seja $n \in \mathbb{N}$. Definimos $I_n =\{i \in \mathbb{N}^+\,|\, i \leq
+    n\}$. Dizemos que um conjunto $A$ é finito se existe $n \in \mathbb{N}$, tal
+    que $A \sim I_n$. Dizemos que um conjunto é infinito se não existe $n \in
+    \mathbb{N}$ tal que $f : A \to I_n$.
+  \end{Definition}
+
+  As definições anteriores tem algumas consequências interessantes. Por exemplo,
+  podemos mostrar que o conjunto dos números inteiros, $\mathbb{Z}$, possui a
+  mesma cardinalidade dos números naturais, $\mathbb{N}$. Note que o bizarro
+  deste fato é que $\mathbb{N} \subset \mathbb{Z}$! A seguinte função bijetora
+  (prove este fato!) mostra que $\mathbb{N} \sim \mathbb{Z}$.
+
+  \[
+    f(n) = \left\{
+      \begin{array}{ll}
+        \frac{n}{2} & \textit{se }n\textit{ é par.}\\
+        \frac{1 - n}{2} & \textit{se }n\textit{ é ímpar}\\
+      \end{array}
+           \right.
+  \]
+
+  Pode-se mostrar que a relação $\sim$ é uma relação de equivalência, isto é,
+  que esta é uma relação reflexiva, transitiva e simétrica.
+
+  \begin{Definition}
+    Dizemos que um conjunto $A$ é contável (enumerável) se este é finito ou se $A
+    \sim\mathbb{N}$. Caso contrário, este é dito não contável.
+  \end{Definition}
+
+  \begin{Example}
+    Mostraremos que o conjunto $(\mathbb{N},\mathbb{N})$ é contável. Para isso,
+    vamos utilizar a seguinte função:
+    \[
+      f(i,j) = \frac{(i + j - 2)(i + j - 1)}{2} + i
+    \]
+    Pode-se mostrar que essa função $f : \mathbb{N}\times\mathbb{N}\to
+    \mathbb{N}$ é uma função bijetora.
+  \end{Example}
+
+  \begin{Theorem}
+    Suponha que $A$ e $B$ são conjuntos enumeráveis. Então, $A\times B$ é
+    enumerável e $A \cup B$ é enumerável.
+  \end{Theorem}
+  \begin{proof}
+    Como $A$ e $B$ são enumeráveis, existem funções $f : A \to \mathbb{N}$ e
+    $g : B \to \mathbb{N}$ bijetoras. As seguintes funções mostram que tanto o
+    produto cartesiano quanto a união produzem conjuntos enumeráveis.
+    \[
+      \begin{array}{lcl}
+        h(x,y) & = & (f(x),g(y))\\ \\
+        h(x) & = & \left\{
+                   \begin{array}{ll}
+                     f(x)  & \textit{se }x\in A\\
+                     -g(x) & \textit{se }x \in B\\
+                   \end{array}
+                   \right.
+      \end{array}
+    \]
+    Observe que no caso da união, estamos definindo uma função $h : A \cup B \to
+    \mathbb{Z}$. Porém, como apresentado anteriormente, $\mathbb{Z}\sim
+    \mathbb{N}$. Como $\sim$ é uma relação transitiva, temos que $A \cup B \sim
+    \mathbb{N}$ conforme requerido.
+  \end{proof}
+
+  \begin{Theorem}
+    Seja $\mathcal{F}$ uma família de conjuntos tal que $\mathcal{F}$ é
+    enumerável e todo elemento de $\mathcal{F}$ é enumerável. Então
+    $\bigcup \mathcal{F}$ é enumerável.
+  \end{Theorem}
+  \begin{proof}
+    Como $\mathcal{F}$ é contável, é possível indexar cada um dos conjuntos que
+    compõe $\mathcal{F}$ por um número natural:
+    \[
+      \mathcal{F} =\{A_1,A_2,...\}
+    \]
+    Porém, sabemos que cada elemento de $\mathcal{F}$ é também enumerável.
+    Assim, temos que podemos indexá-los por número inteiro:
+    \[
+      \begin{array}{l}
+        A_1 = \{a^1_1, a^2_1,a^3_1...\}\\
+        A_2 = \{a^1_2, a^2_2,a^3_2...\}\\
+        A_3 = \{a^1_3, a^2_3,a^3_3...\}\\
+        \vdots
+      \end{array}
+    \]
+    Note que $\bigcup\mathcal{F} = \{a^i_j\,|\,i,j\in\mathbb{N}\}$. Seja $f :
+    \mathbb{N}\times\mathbb{N} \to \bigcup{F}$ definida como:
+    \[
+      f(i,j) = a^i_j
+    \]
+    Como sabemos que $\mathbb{N} \times \mathbb{N}$ é enumerável, temos que
+    existe uma função bijetora $g : \mathbb{N} \to \mathbb{N} \times
+    \mathbb{N}$. Dessa forma $f \circ g : \mathbb{N} \to \bigcup\mathcal{F}$
+    é também uma função bijetora, concluindo a demonstração.
+  \end{proof}
+
+  \begin{Definition}
+    Uma sequência de elementos sobre um conjunto $A$ é uma função $f : I_n\to
+    A$, em que $n \in \mathbb{N}$ é o tamanho da sequência $f$.
+  \end{Definition}
+
+  Intuitivamente, sequências são o equivalente matemática de listas presentes em
+  linguagens de programação. Quando consideramos o conjunto $A$ como sendo um
+  alfabeto finito, temos que sequências nada mais são que strings sobre esse
+  determinado alfabeto. A seguir apresentamos que o conjunto de sequências
+  finitas sobre um conjunto $A$ é enumerável, se $A$ é um conjunto enumerável.
+  Para mostrar esse fato, primeiramente provaremos um resultado auxiliar.
+
+  \begin{Lemma}
+    Seja $S_n$ o conjunto de todas as sequências de tamanho $n\in\mathbb{N}$ de
+    um conjunto enumerável $A$. Então $S_n$ é enumerável.
+  \end{Lemma}
+  \begin{proof}
+    No caso base, temos $n = 0$. Note que $I_0 = \emptyset$ e assim uma
+    sequência de tamanho $n = 0$ é uma função $f : \emptyset \to A$, que
+    é exatamente o conjunto $\emptyset$. Logo, $S_0 = \{\emptyset\}$ é
+    enumerável. Para o passo indutivo, suponha $n\in\mathbb{N}$ arbitrário e que
+    $S_n$ é enumerável. Seja $F : A \times S_n \to S_{n + 1}$ definida como:
+    \[
+      F(a,f) = f \cup \{(n+1,a)\}
+    \]
+    Note que $F(a,f)$ é exatamente a operação de inserir $a$ na sequência $f$.
+    Logo, $F$ é uma função bijetora. Dessa forma, temos que $A \times S_n \sim
+    S_{n + 1}$. Porém, como $A$ e $S_n$ são contáveis e o produto cartesiano de
+    dois conjuntos contáveis é também contável, temos que $S_{n + 1}$ é contável.
+  \end{proof}
+
+  \begin{Theorem}
+    O conjunto de todas as sequências finitas de um conjunto contável $A$ é
+    também contável.
+  \end{Theorem}
+  \begin{proof}
+    Note que o conjunto de todas as sequências finitas é
+    $\bigcup_{n\in\mathbb{N}}S_n$. Pelo Lema 1, temos que $S_n$ é contável. Pelo
+    teorema 2, temos que a união de famílias enumeráveis de conjuntos
+    enumeráveis é também enumerável.
+  \end{proof}
+
+  Note que o teorema 3 implica que $\Sigma^*$ é um conjunto enumerável.
+
+  \section{O teorema de Cantor}
+
+  A partir dos resultados apresentados acima pode-se pensar que todos os
+  conjuntos são enumeráveis e que qualquer operação preserva a cardinalidade
+  de conjuntos. Porém, não é esse o caso. A operação de conjunto potência não
+  preserva a cardinalidade de um conjunto. Esse fato é conhecido como teorema
+  de Cantor e é apresentado a seguir.
+
+  \begin{Theorem}
+    O conjunto $\mathcal{P}(\mathbb{N})$ não é enumerável.
+  \end{Theorem}
+  \begin{proof}
+    
+  \end{proof}
+  \section{Exercícios}
+
+  \begin{enumerate}
+    \item Prove que a relação $\sim$ é uma relação de equivalência.
+    \item Prove que o conjunto de todos os números naturais ímpares é contável.
+  \end{enumerate}
+\end{document}
