@@ -1,0 +1,180 @@
+\documentclass[a4paper]{article}
+
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{proof,tikz}
+\usepackage{algorithm2e}
+\usepackage{amssymb,amsthm,stmaryrd}
+
+
+\usepackage[edges]{forest}
+\usetikzlibrary{automata, positioning, arrows}
+
+
+\newtheorem{Lemma}{Lema}
+\newtheorem{Theorem}{Teorema}
+\theoremstyle{definition}
+\newtheorem{Example}{Exemplo}
+\newtheorem{Definition}{Definição}
+\newtheorem{Fact}{Fato}
+
+
+\usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \lhead{Teoria da Computação}
+  \rhead{Aula 25}
+  \lfoot{Prof. Rodrigo Ribeiro}
+  \rfoot{\thepage}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \pagestyle{fancy}
+
+\tikzset{
+        ->,  % makes the edges directed
+        >=stealth', % makes the arrow heads bold
+        node distance=3cm,
+        every state/.style={thick, fill=gray!10},
+        initial text=$\,$
+        }
+  
+
+\begin{document}
+
+\title{Aula 25 - O Teorema de Rice}
+  \author{Rodrigo Ribeiro}
+
+  \maketitle
+
+  \pagestyle{fancy}
+
+
+  \section*{Objetivos}
+
+  \begin{itemize}
+    \item Apresentar e demonstrar o teorema de Rice.
+    \item Apresentar como o teorema de Rice pode ser utilizado para
+          provar que problemas são indecidíveis.
+  \end{itemize}
+
+
+  \section{Introdução}
+
+  Na aula 24, vimos alguns problemas indecidíveis e suas respectivas provas de
+  indecidibilidade. Porém, de maneira geral, todos os problemas apresentados
+  possuem a seguinte estrutura, quando expressos como uma linguagem de códigos
+  de MTs:
+
+  \[
+    \{R\langle M \rangle\,|\, L(M) \textit{ satisfaz a propriedade }P\}
+  \]
+
+  Como exemplo, para o problema da fita em branco, temos que a propriedade $P$ é
+  $\lambda \in L(M)$. Nesta aula, apresentaremos o teorema de Rice, que
+  generaliza a indecibilidade de problemas com essa estrutura. O teorema mostra
+  que quase todas as propriedades sobre códigos de MTs resultam em linguagens
+  que não são recursivas.
+
+  \section{Teorema de Rice}
+
+  O enunciado do teorema de Rice faz menção a propriedades não triviais, cuja
+  definição é dada a seguir.
+
+  \begin{Definition}
+    Dizemos que uma propriedade $P$ sobre linguagens recursivamente enumeráveis
+    é trivial se ela é verdadeira para todas ou nenhuma linguagem recursivamente
+    enumerável. 
+  \end{Definition}
+
+  \begin{Example}
+    Primeramente, note que existem apenas duas propriedades triviais: as funções
+    constantes sobre valores booleanos. Quaisquer outras propriedades são não
+    triviais. A seguir, apresentamos exemplos de propriedades não triviais de
+    linguagens recursivamente enumeráveis.
+    \begin{itemize}
+       \item Determinar se $L(M) = \emptyset$.
+       \item Determinar se $L(M) = \Sigma^*$.
+       \item Determinar se $L(M)$ é finita.
+       \item Determinar se $L(M)$ é regular.
+    \end{itemize}
+  \end{Example}
+
+  A seguir apresentamos o enunciado e a demonstração do teorema de Rice.
+
+  \begin{Theorem}
+    Toda propriedade não trivial de linguagens recursivamente enumeráveis é
+    indecidível.
+  \end{Theorem}
+  \begin{proof}
+    Suponha que $P$ seja uma propriedade não trivial de linguagens
+    recursivamente enumeráveis. Suponha, adicionalmente, que $P(\emptyset) =
+    \bot$. Uma vez que $P$ é não trivial, deve existir uma linguagem $L$ tal que
+    $P(L) = \top$. Seja $M_L$ uma MT que aceita a linguagem $L$. Agora,
+    apresentaremos uma função $\sigma$ que reduz o problema da parada ao
+    conjunto $\{R\langle M \rangle\,|\,P(L(M)) = \top\}$ mostrando que esse
+    último não é uma linguagem recursiva. A função $\sigma$ cria uma MT
+    $M'$ que sobre a entrada $y$, realiza os seguintes passos:
+    \begin{enumerate}
+       \item Escreve a palavra $w$, parte da entrada do problema da parada,
+         depois de $y$, isto é, se a fita possui a forma $\langle y$ ela passará
+         a ter o formato $\langle y \lbrack w $, em que $\lbrack$ é um novo
+         símbolo que representará o início da fita de $M$, a MT fornecida como
+         parte da entrada do problema da parada.
+       \item $M'$ se comporta como $M$ sobre a fita $\lbrack w$.
+       \item Se $M$ para com entrada $w$, então $M'$ executa a MT $M_L$ sobre a
+         entrada $y$ e para se $M_L$ parar com $y$.
+     \end{enumerate}
+     Agora, consideramos os seguintes casos:
+     \begin{enumerate}
+        \item $M$ para com entrada $w$. Nessa situação, temos que $M'$ executa a
+          MT $M_L$ sobre a entrada $y$ e, portanto irá parar se $M_L$ parar com
+          entrada $y$. Dessa forma, podemos dizer que $L(M') = L(M_L) = L$ e,
+          foi suposto que $P(L(M')) = P(L) = \top$.
+        \item $M$ não para com entrada $w$. Nessa situação, $M'$ entra em loop
+          junto com $M$ e não aceita a entrada $y$ e, dessa forma, temos que
+          $L(M') = \emptyset$. Logo, $P(L(M')) = P(\emptyset) = \bot$.
+        \end{enumerate}
+        Dessa forma, $P(L(M)) = \top$ se, e somente se, $M$ para com entrada
+        $w$, o que conclui a indecidibilidade deste problema.
+      \end{proof}
+
+      Dado o teorema de Rice, o questão de mostrar a indecidibilidade de um
+      problema resume-se em provar que a propriedade que descreve esse problema
+      é uma propriedade não trivial. Para isso, basta mostrarmos exemplos que
+      tornam a propriedade verdadeira e exemplos que tornam a propriedade falsa.
+      O exemplo seguinte prova a indecidibilidade de um problema usando o
+      teorema de Rice.
+
+      \begin{Example}
+        O problema da fita em branco pode ser descrito pela seguinte linguagem:
+        \[
+          \{R\langle M \rangle\,|\, \lambda \in L(M)\}
+        \]
+        Para essa linguagem, temos que a propriedade $P(L(M)) = \lambda \in
+        L(M)$. Note que a seguinte linguagem $L_1$ é recursivamente enumerável
+        e $\lambda \in L_1$: $L_1 = \{0\}^*$. Além disso, a linguagem $L_2$ é
+        também recursivamente enumerável: $L_2 = \{0\}^+$. Note que $\lambda
+        \not\in L_2$. Dessa forma, a propriedade $P(L(M)) = \lambda \not\in
+        L(M)$ é não trivial e, pelo teorema de Rice, a linguagem
+        $\{R\langle M \rangle\,|\, \lambda \in L(M)\}$ não é recursiva, o que
+        mostra que o problema da fita em branco é indecidível.
+      \end{Example}
+  \section{Exercícios}
+
+  \begin{enumerate}
+     \item Considere os problemas seguintes. Caso seja possível, demonstre a sua
+       indecibilidade utilizando o teorema de Rice.
+       \begin{enumerate}
+          \item Dada uma MT $M$ e uma palavra $w$, determinar se $M$ move
+            o cabeçote à esquerda durante o processamento de $w$.
+          \item Dada uma MT $M$, uma palavra $w$ e um estado $e$, determinar
+            se a computação de $w$ por $M$ atinge o estado $e$.
+          \item Dada uma MT $M$, determinar se $M$ aceita alguma palavra
+            iniciada com $0$.
+          \item Data uma MT $M$, determinar se $M$ não aceita palavras de
+            tamanho par.
+       \end{enumerate}
+  \end{enumerate}
+\end{document}

@@ -19,6 +19,7 @@
 \theoremstyle{definition}
 \newtheorem{Example}{Exemplo}
 \newtheorem{Definition}{Definição}
+\newtheorem{Fact}{Fato}
 
 
 \usepackage{fancyhdr}
@@ -88,7 +89,21 @@
       \forall y . y \in B \to \exists x. x \in A \land f(x) = y.
     \]
   \end{Definition}
+  
+  \begin{Definition}
+    Seja $f : A\to B$ uma função. Dizemos que $f$ é uma função bijetora se $f$
+    for injetora e sobrejetora.
+  \end{Definition}
 
+  \begin{Fact}
+    Se $f : A \to B$ é uma função bijetora, então sua inversa $f^{-1} : B \to A$
+    também é uma função bijetora.
+  \end{Fact}
+
+  \begin{Fact}
+    Sejam $f : A \to B$ e $g : B \to C$ duas funções bijetoras. Então,
+    $g \circ f : A \to C$ também é uma função bijetora.
+  \end{Fact}
   
   
   \section{Conjuntos enumeráveis}
@@ -254,8 +269,81 @@
     O conjunto $\mathcal{P}(\mathbb{N})$ não é enumerável.
   \end{Theorem}
   \begin{proof}
-    
+    A demonstração consiste em mostrar que não existe uma função $f : \mathbb{N}
+    \to \mathcal{P}(\mathbb{N})$ bijetora. Para isso, mostraremos que
+    $f : \mathbb{N} \to \mathcal{P}(\mathbb{N})$ não pode ser sobrejetora o que
+    é suficiente para mostrar que $\mathcal{P}(\mathbb{N})$ não é contável.
+    Dizer que $f$ não é sobrejetora pode ser descrito como:
+    \[
+      \neg \forall D . D \in \mathcal{P}(\mathbb{N}) \to \exists n. n \in \mathbb{N} \land f(n) = D.
+    \]
+    Usando álgebra Booleana, temos que a fórmula acima é equivalente a:
+    \[
+      \exists D. D \in \mathcal{P}(\mathbb{N}) \land \forall n. n\in\mathbb{N}
+      \to f(n) \neq D
+    \]
+    Logo, o maior problema é encontrar um conjunto $D \subset \mathbb{N}$ tal
+    que $f(n) \neq D$ para todo $n$. Basta fazer $D$ ser o seguinte conjunto.
+    \[
+      D = \{n \in \mathbb{N}\,|\,n \not\in f(n)\}
+    \]
+    Pela definição de $D$, temos que $D\subseteq \mathbb{N}$ e, portanto,
+    $D \in \mathcal{P}(\mathbb{N})$. Suponha $x \in \mathbb{N}$ arbitrário e
+    considere os seguintes casos.
+    \begin{enumerate}
+      \item $x \in f(x)$: Pela definição de $D$, podemos concluir que $x \not\in
+        D$. Como $x \in f(x)$ e $x\not\in D$, temos que $f(x) \neq D$.
+      \item $x \not\in f(x)$: Pela definição de $D$, podemos concluir que $x \in
+        D$. Como $x\not\in f(x)$ e $x\in D$, temos que $f(x) \neq D$.
+    \end{enumerate}
+    Como $x\in\mathbb{N}$ é arbitrário temos que $\forall x. x\in\mathbb{N} \to
+    D \neq f(x)$ e, portanto, $f$ não pode ser sobrejetora. Dessa forma, temos
+    que não existe função $f : \mathbb{N} \to \mathcal{P}(\mathbb{N})$ bijetora,
+    o que nos leva a concluir que  $\mathcal{P}(\mathbb{N})$ não é enumerável.
   \end{proof}
+
+  Observe que o conjunto de todas as linguagens sobre um determinado alfabeto
+  não é enumerável. 
+
+  \section{Teorema de Cantor e Indecidibilidade}
+
+  É fácil perceber que $|A| < \mathcal{P}(A)$, quando $A$ é finito. Porém, uma
+  consequência do teorema de Cantor, é que a mesma idéia vale para conjuntos
+  infinitos. Se $A$ é um conjunto enumerável infinito, então
+  $A \not\sim \mathcal{P}(A)$. De maneira informal, isso quer dizer que o
+  conjunto potência sempre terá maior cardinalidade que o conjunto que o
+  originou.
+  
+  Para entender a relação entre o teorema de Cantor e a decidibilidade de
+  problemas, considere os seguintes fatos:
+  \begin{itemize}
+     \item Podemos considerar o código ASCII ou o Unicode como um alfabeto.
+     \item Programas expressos em uma linguagem de programação qualquer são
+           palavras sobre um alfabeto.
+  \end{itemize}
+  Como apresentado anteriormente, o conjunto palavras (sequências) sobre um
+  alfabeto é enumerável. Dessa forma, o conjunto de todos os programas expressos
+  em uma linguagem de programação é enumerável.
+
+  Se conseguimos expressar programas como sequências, podemos pensar que
+  entradas para programas também podem ser representadas de maneira similar.
+  Porém, cada programa possui seu próprio conjunto de entradas. Logo, podemos
+  associar a um problema (a ser resolvido por um algoritmo) um conjunto que
+  representa todas as suas possíveis entradas. Assim sendo, temos que para cada
+  programa, existe uma linguagem correspondente as entradas por ele demandadas.
+  Logo, o conjunto de todas as possíveis entradas para problemas é o conjunto
+  de todas as possíveis linguagens sobre um dado alfabeto, isto é,
+  $\mathcal{P}(\Sigma^*)$.
+
+  
+  O que isso quer dizer? De maneira intuitiva, isso representa que o conjunto
+  $\mathcal{P}(\Sigma^*)$ possui uma cardinalidade maior que $\Sigma^*$.
+  Conforme discutido anteriormente, podemos representar programas como palavras
+  em $\Sigma^*$ e problemas como o conjunto de suas entradas, isto é,
+  linguagens (elementos de $\mathcal{P}(\Sigma^*)$). Disso segue que
+  \textbf{existem mais problemas que programas aptos a resolvê-los}. Logo,
+  existem problemas para os quais não há solução.
+  
   \section{Exercícios}
 
   \begin{enumerate}

@@ -1,0 +1,249 @@
+\documentclass[a4paper]{article}
+
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{proof,tikz}
+\usepackage{algorithm2e}
+\usepackage{amssymb,amsthm,stmaryrd}
+
+
+\usepackage[edges]{forest}
+\usetikzlibrary{automata, positioning, arrows}
+
+
+\newtheorem{Lemma}{Lema}
+\newtheorem{Theorem}{Teorema}
+\theoremstyle{definition}
+\newtheorem{Example}{Exemplo}
+\newtheorem{Definition}{Definição}
+\newtheorem{Fact}{Fato}
+
+
+\usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \lhead{Teoria da Computação}
+  \rhead{Aula 27}
+  \lfoot{Prof. Rodrigo Ribeiro}
+  \rfoot{\thepage}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \pagestyle{fancy}
+
+\tikzset{
+        ->,  % makes the edges directed
+        >=stealth', % makes the arrow heads bold
+        node distance=3cm,
+        every state/.style={thick, fill=gray!10},
+        initial text=$\,$
+        }
+  
+
+\begin{document}
+
+\title{Aula 27 - Problemas Indecidíveis sobre GLCs}
+  \author{Rodrigo Ribeiro}
+
+  \maketitle
+
+  \pagestyle{fancy}
+
+
+  \section*{Objetivos}
+
+  \begin{itemize}
+    \item Apresentar como reduzir o PCP a diversos problemas envolvendo GLCs.
+  \end{itemize}
+
+
+  \section{Introdução}
+
+  O objetivo desta aula é apresentar a prova de indecibilidade de alguns
+  problemas envolvendo GLCs. Mostraremos que o problema de determinar se
+  uma gramática arbitrária é ambígua é indecidível. A prova de que esse
+  problema é indecidível consiste em uma redução ao problema de correspondência
+  de Post.
+
+
+  \section{Reduzindo o SCP a GLCs}
+
+  Dado um SCP $S = (\Sigma, P)$, em que $P = [(x_1,y_1),...,(x_n,y_n)]$
+  podemos construir duas GLCs, que chamaremos de $G_x$ e $G_y$, que
+  representarão os componentes de um SCP. A construção seguinte ilustra como
+  definir essas gramáticas.
+  
+  
+  \begin{Definition}
+    Seja um SCP $S = (\Sigma, P)$, em que $P = [(x_1,y_1),...,(x_n,y_n)]$ e
+    $\{s_1,...,s_n\}$ símbolos distintos tais que $\forall i. s_i\not\in\Sigma$.
+    O objetivo dos símbolos $s_i$ é que esses são utilizados para indexar pares
+    da solução do SCP. Usando o SCP, podemos construir duas GLCs sobre o
+    alfabeto $\Sigma' = \Sigma\cup\{s_1,...,s_n\}$:
+    \begin{itemize}
+       \item $G_x=(\{P_x\},\Sigma', R_x, P_x)$, em que as regras são da forma:
+         \begin{itemize}
+           \item $P_x \to x_iP_x s_i$, para $1 \leq i \leq n$;
+           \item $P_x \to x_is_i$, para $1 \leq i \leq n$.
+           \end{itemize}
+       \item $G_y=(\{P_y\},\Sigma', R_y, P_y)$, em que as regras são da forma:
+         \begin{itemize}
+           \item $P_y \to y_iP_y s_i$, para $1 \leq i \leq n$;
+           \item $P_y \to y_is_i$, para $1 \leq i \leq n$.
+         \end{itemize}
+    \end{itemize}
+  \end{Definition}
+
+  A seguir ilustramos essa construção para um SCP de exemplo.
+
+  \begin{Example}
+    Seja o SCP $(\{0,1\}, [(10,0), (0,010), (01,11)])$. Como esse SCP possui 3
+    pares, usaremos os símbolos $\{s_1,s_2,s_3\}$ para indexar estes pares. As
+    gramáticas produzidas para o SCP acima são:
+    \begin{itemize}
+      \item Gramática $P_x$
+        \[
+          \begin{array}{lcl}
+            P_x & \to &  10 P_x s_1 \,|\, 0P_x s_2 \,|\, 01P_x s_3\\
+                & \mid & 10s_1 \,|\, 0s_2\,|\, 01s_3\\
+          \end{array}
+        \]
+      \item Gramática $P_y$
+        \[
+          \begin{array}{lcl}
+            P_y & \to & 0P_y s_1 \,|\, 010P_ys_2 \,|\, 11 P_y s_3 \\
+                & \mid & 0s_1 \,|\, 010s_2 \,|\, 11s_3\\
+          \end{array}
+        \]
+      \end{itemize}
+
+      Conforme visto na aula 25, temos que o SCP acima possui solução 2131.
+      Logo, podemos mostrar uma derivações nessas gramáticas que refletem
+      a solução do SCP. Primeiramente, a derivação em $P_x$:
+      \[
+        \begin{array}{lcll}
+          P_x & \Rightarrow & 0P_xs_2       & \{P_x \to 0 P_x s_2\} \\
+              & \Rightarrow & 010P_x s_1s_2 & \{P_x \to 10 P_x s_1\} \\
+              & \Rightarrow & 01001P_x s_3s_1s_2 & \{P_x \to 01 P_x s_3\} \\
+              & \Rightarrow & 0100110s_1s_3s_1s_2 & \{P_x \to 10s_1\}\\
+        \end{array}
+      \]
+      A mesma derivação na gramática $P_y$ gera:
+      \[
+        \begin{array}{lcll}
+          P_y & \Rightarrow & 010P_ys_2       & \{P_y \to 010 P_y s_2\} \\
+              & \Rightarrow & 0100P_ys_1s_2   & \{P_y \to 0P_y s_1\}\\
+              & \Rightarrow & 010011P_ys_3s_1s_2 & \{P_y \to 11 P_y s_3\} \\
+              & \Rightarrow & 0100110s_1s_3s_1s_2 & \{P_y \to 0s_1\}\\
+        \end{array}
+      \]
+      Observe que $P_x \Rightarrow^* 100110 s_1 s_3 s_1 s_2$ e
+      $P_y \Rightarrow^* 100110 s_1 s_3 s_1 s_2$.
+    \end{Example}
+
+    Do exemplo anterior, podemos perceber que se $i_1 i_2 ... i_k$ é uma
+    solução para um SCP, existem derivações nas gramáticas $G_x$ e $G_y$ tais
+    que $P_x \Rightarrow x_{i_1}...x_{i_k}s_{i1}...s_{ik}$, 
+    $P_y \Rightarrow y_{i_1}...y_{i_k}s_{i1}...s_{ik}$. e
+    $x_{i_1}...x_{i_k} = y_{i_1}...y_{i_k}$.
+
+    Desse fato, podemos concluir que o SCP possui solução se, e somente se,
+    $L(G_x) \cap L(G_y) \neq \emptyset$ (pois ambas derivam a mesma palavra que
+    corresponde a solução do SCP).
+
+    \begin{Theorem}
+      O problema de determinar se duas GLCs são disjuntas é indecidível.
+    \end{Theorem}
+    \begin{proof}
+      Consequência da construção apresentada para as gramáticas $G_x$ e $G_y$.
+    \end{proof}
+
+    Conforme apresentado em aulas anteriores, as LLCs não são fechadas sobre a
+    complementação. Porém, as gramáticas $G_x$ e $G_y$ possuem GLCs que geram o
+    seu complemento.
+
+    \begin{Definition}[Gramática para o complemento de $G_x$ e $G_y$]
+      Seja um SCP $S = (\Sigma, P)$, em que $P = [(x_1,y_1),...,(x_n,y_n)]$ e
+      $\{s_1,...,s_n\}$ símbolos distintos tais que $\forall i.
+      s_i\not\in\Sigma$. A gramática que gera $\overline{G_x}$ é
+      $(\{P,X\}, \Sigma \cup \{s_1,...,s_n\}, R, P)$, em que o conjunto de
+      regras $R$ é dado por:
+      \[
+        \begin{array}{lcll}
+          P & \to & x_i P s_i & \textit{para }1 \leq i \leq n \\
+          P & \to & Xa        & a \in \Sigma \\
+          P & \to & s_i X     & \textit{ para } 1 \leq i \leq n \\
+          P & \to & ya X s_i        & \textit{ para }1 \leq i \leq n \textit{ }y
+                                \textit{ é prefixo de }x_i, |ya| \leq |x_i|,\\ &
+                  & &
+                                      ya \neq x_i, a \in \Sigma \cup\{s_1,...,s_n\} \\
+          X & \to a X         & a \in \Sigma \cup \{s_1,..., s_n\} \\
+          X & \to \lambda \\
+        \end{array}
+      \]
+    \end{Definition}
+
+    Usando a construção acima, podemos mostrar a indecidibilidade de outro
+    problema envolvendo GLCs.
+
+    \begin{Theorem}
+      O problema de determinar se $L(G) = \Sigma^*$ é indecidível para uma
+      GLC $G$ arbitrária.
+    \end{Theorem}
+    \begin{proof}
+      Sejam $G_x$ e $G_y$ as gramáticas correspondentes a um SCP $S$.
+      Construiremos uma gramática $G$ tal que $L(G) = \Sigma^*$ se, e somente
+      se, o SCP $S$ não possui solução. Seja $L(G) = \overline{L(G_x)} \cup
+      \overline{L(G_y)}$. Temos:
+      \[
+        \begin{array}{lc}
+          \overline{L(G_x)} \cup \overline{L(G_y)} = \Sigma^* & \leftrightarrow \\
+          \overline{\overline{L(G_x)} \cup \overline{L(G_y)}} =
+          \overline{\Sigma^*} & \leftrightarrow \\
+          \overline{\overline{L(G_x)}} \cap \overline{\overline{L(G_y)}} =
+          \emptyset & \leftrightarrow \\
+          L(G_x) \cap L(G_y) = \emptyset & \\
+        \end{array}
+      \]
+      Porém, conforme provado anteriormente, se um SCP $S$ possui solução, então
+      $L(G_x) \cap L(G_y) \neq \emptyset$. Dessa forma, temos que o SCP $S$ não
+      possui solução se $L(G_x) \cap L(G_y) = \emptyset$. Dessa forma, temos que
+      o problema de determinar se $L(G) = \Sigma^*$ é indecidível. 
+    \end{proof}
+
+    Encerramos essa aula apresentando a demonstração de que o problema de
+    determinar se uma GLC é ambígua é também indecidível.
+
+    \begin{Theorem}
+      O problema de determinar se uma GLC arbitrária $G$ é ambígua é
+      indecidível.
+    \end{Theorem}
+    \begin{proof}
+      Sejam $G_x$ e $G_y$ as gramáticas geradas a partir de um SCP $S$ e $P_x$ e
+      $P_y$ os símbolos de partida de $G_x$ e $G_y$, respectivamente.
+      Considere a seguinte gramática $G = (\{P,P_x,P_y\},
+      \Sigma\cup\{s_1,...,s_n\},R_x \cup R_y \cup \{P \to P_x \,|\, P_y\}, P)$.
+      Note que $G$ será ambígua exatamente nas situações em que $L(G_x) \cap
+      L(G_y) \neq \emptyset$, ou seja, quando o PCP possuir solução.
+    \end{proof}
+
+    \section*{Exercícios}
+
+    \begin{enumerate}
+      \item Construa as gramáticas $G_x$ e $G_y$ para o seguinte SCP $S =
+        (\{0,1\}, P)$, em que $P = [(01,011), (001,01), (10,00)]$.
+      \item Prove que os problemas seguintes são decidíveis ou indecidíveis.
+        \begin{enumerate}
+          \item Determinar se $L(G_1) \cap L(G_2) = \emptyset$ quando $G_1$ é
+            uma gramática livre de contexto e $G_2$ uma gramática regular.
+          \item Determinar se $L(G_1) \cap L(G_2)$ é finito, quando $G_1$ e
+            $G_2$ são gramáticas livres de contexto.
+          \item Determinar se $L(G_1) \cup L(G_2)$ é finito, quando $G_1$ e
+            $G_2$ são gramáticas livres de contexto.
+          \item Determinar se $L(G_1) = L(G_2)$ é finito, quando $G_1$ e
+            $G_2$ são gramáticas livres de contexto.
+        \end{enumerate}
+    \end{enumerate}
+\end{document}
+
